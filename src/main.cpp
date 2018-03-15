@@ -45,10 +45,8 @@ public:
     void data_callback(const std::string& id, const dataheap2::DataChunk& chunk) override
     {
         auto& metric_data = data_[id];
-        std::cout << "DC " << id << "\n";
         for (const auto& tv : chunk)
         {
-            std::cout << tv << "\n";
             metric_data.push_back(tv);
         }
     }
