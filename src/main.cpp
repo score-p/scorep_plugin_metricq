@@ -20,13 +20,25 @@ using namespace scorep::plugin::policy;
 // Must be system clock for real epoch!
 using local_clock = std::chrono::system_clock;
 
+template <typename T, typename V>
+std::vector<T> keys(std::map<T, V>& map)
+{
+    std::vector<T> ret;
+    ret.reserve(map.size());
+    for (auto const& elem : map)
+    {
+        ret.push_back(elem.first);
+    }
+    return ret;
+};
+
 class ScorepUnsubscriptionSink : public UnsubscriptionSink
 {
 public:
     ScorepUnsubscriptionSink(const std::string& manager_host, const std::string& token,
                              const std::string& queue,
                              std::map<std::string, std::vector<dataheap2::TimeValue>>& data)
-    : UnsubscriptionSink(manager_host, token, queue), data_(data)
+    : UnsubscriptionSink(manager_host, token, queue, keys(data)), data_(data)
     {
     }
 
@@ -65,6 +77,7 @@ public:
 
     void add_metric(Metric& metric)
     {
+        metric_data_[metric.name];
         metrics_.push_back(metric.name);
     }
 
@@ -72,7 +85,8 @@ public:
     {
         convert_.synchronize_point();
         SubscriptionSink sink(scorep::environment_variable::get("SERVER"),
-                              scorep::environment_variable::get("TOKEN", "scorepPlugin"));
+                              scorep::environment_variable::get("TOKEN", "scorepPlugin"),
+                              keys(metric_data_));
         sink.main_loop();
         queue_ = sink.queue_name;
     }

@@ -2,8 +2,9 @@
 #include "log.hpp"
 
 UnsubscriptionSink::UnsubscriptionSink(const std::string& manager_host, const std::string& token,
-                                       const std::string& queue)
-: Sink(token)
+                                       const std::string& queue,
+                                       const std::vector<std::string>& routing_keys)
+: Sink(token), routing_keys_(routing_keys)
 {
     data_queue_ = queue;
     connect(manager_host);
@@ -19,7 +20,7 @@ void UnsubscriptionSink::sink_config_callback(const json& config)
 
 void UnsubscriptionSink::config_callback(const json& config)
 {
-    send_management("unsubscribe", { { "metrics", { "dataDrop" } }, { "dataQueue", data_queue_ } });
+    send_management("unsubscribe", { { "metrics", routing_keys_ }, { "dataQueue", data_queue_ } });
 
     const std::string& data_server_address_ = config["dataServerAddress"];
     data_connection_ =

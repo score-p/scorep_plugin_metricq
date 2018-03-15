@@ -6,6 +6,7 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include <string>
+#include <vector>
 
 using json = nlohmann::json;
 
@@ -13,7 +14,7 @@ class UnsubscriptionSink : public dataheap2::Sink
 {
 public:
     UnsubscriptionSink(const std::string& manager_host, const std::string& token,
-                       const std::string& queue);
+                       const std::string& queue, const std::vector<std::string>& routing_keys);
     ~UnsubscriptionSink();
 
 private:
@@ -22,4 +23,5 @@ private:
     void ready_callback() override;
 
     uint64_t message_count;
+    std::vector<std::string> routing_keys_;
 };
