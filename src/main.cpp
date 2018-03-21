@@ -1,8 +1,8 @@
 #include "log.hpp"
-#include "subscription_sink.hpp"
-#include "unsubscription_sink.hpp"
 
 #include <dataheap2/ostream.hpp>
+#include <dataheap2/simple.hpp>
+#include <dataheap2/simple_drain.hpp>
 #include <dataheap2/types.hpp>
 
 #include <scorep/plugin/plugin.hpp>
@@ -32,29 +32,6 @@ std::vector<T> keys(std::map<T, V>& map)
     return ret;
 };
 
-class ScorepUnsubscriptionSink : public UnsubscriptionSink
-{
-public:
-    ScorepUnsubscriptionSink(const std::string& manager_host, const std::string& token,
-                             const std::string& queue,
-                             std::map<std::string, std::vector<dataheap2::TimeValue>>& data)
-    : UnsubscriptionSink(manager_host, token, queue, keys(data)), data_(data)
-    {
-    }
-
-    void data_callback(const std::string& id, const dataheap2::DataChunk& chunk) override
-    {
-        auto& metric_data = data_[id];
-        for (const auto& tv : chunk)
-        {
-            metric_data.push_back(tv);
-        }
-    }
-
-private:
-    std::map<std::string, std::vector<dataheap2::TimeValue>>& data_;
-};
-
 struct Metric
 {
     std::string name;
@@ -82,26 +59,28 @@ public:
     void start()
     {
         convert_.synchronize_point();
-        SubscriptionSink sink(scorep::environment_variable::get("SERVER"),
-                              scorep::environment_variable::get("TOKEN", "scorepPlugin"),
-                              keys(metric_data_));
-        sink.main_loop();
-        queue_ = sink.queue_name;
+        queue_ = dataheap2::subscribe(scorep::environment_variable::get("SERVER"),
+                                      scorep::environment_variable::get("TOKEN", "scorepPlugin"),
+                                      keys(metric_data_));
     }
 
     void stop()
     {
         convert_.synchronize_point();
-        ScorepUnsubscriptionSink sink(scorep::environment_variable::get("SERVER"),
-                                      scorep::environment_variable::get("TOKEN", "scorepPlugin"),
-                                      queue_, metric_data_);
-        sink.main_loop();
+        data_drain_ = std::make_unique<dataheap2::SimpleDrain>(
+            scorep::environment_variable::get("TOKEN", "scorepPlugin"), queue_);
+        data_drain_->add(keys(metric_data_));
+        data_drain_->connect(scorep::environment_variable::get("SERVER"));
+        Log::debug() << "starting data drain main loop.";
+        data_drain_->main_loop();
+        Log::debug() << "finished data drain main loop.";
     }
 
     template <class Cursor>
     void get_all_values(Metric& metric, Cursor& c)
     {
-        for (auto& tv : metric_data_.at(metric.name))
+        auto data = data_drain_->at(metric.name);
+        for (auto& tv : data)
         {
             c.write(convert_.to_ticks(tv.time), tv.value);
         }
@@ -112,6 +91,7 @@ private:
     std::string queue_;
     std::map<std::string, std::vector<dataheap2::TimeValue>> metric_data_;
     scorep::chrono::time_convert<> convert_;
+    std::unique_ptr<dataheap2::SimpleDrain> data_drain_;
 };
 
 SCOREP_METRIC_PLUGIN_CLASS(dataheap2_plugin, "dataheap2")

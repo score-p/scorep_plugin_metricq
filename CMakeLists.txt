@@ -9,7 +9,7 @@ git_submodule_update()
 add_subdirectory(lib)
 
 add_library(dataheap2_plugin
-    MODULE src/main.cpp src/subscription_sink.cpp src/unsubscription_sink.cpp)
+    MODULE src/main.cpp)
 target_compile_features(dataheap2_plugin PRIVATE cxx_std_17)
 target_link_libraries(dataheap2_plugin
     PRIVATE
