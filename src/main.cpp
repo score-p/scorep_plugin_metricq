@@ -52,7 +52,6 @@ public:
 
     void add_metric(Metric& metric)
     {
-        metric_data_[metric.name];
         metrics_.push_back(metric.name);
     }
 
@@ -61,7 +60,7 @@ public:
         convert_.synchronize_point();
         queue_ = dataheap2::subscribe(scorep::environment_variable::get("SERVER"),
                                       scorep::environment_variable::get("TOKEN", "scorepPlugin"),
-                                      keys(metric_data_));
+                                      metrics_);
     }
 
     void stop()
@@ -69,7 +68,7 @@ public:
         convert_.synchronize_point();
         data_drain_ = std::make_unique<dataheap2::SimpleDrain>(
             scorep::environment_variable::get("TOKEN", "scorepPlugin"), queue_);
-        data_drain_->add(keys(metric_data_));
+        data_drain_->add(metrics_);
         data_drain_->connect(scorep::environment_variable::get("SERVER"));
         Log::debug() << "starting data drain main loop.";
         data_drain_->main_loop();
@@ -79,7 +78,7 @@ public:
     template <class Cursor>
     void get_all_values(Metric& metric, Cursor& c)
     {
-        auto data = data_drain_->at(metric.name);
+        auto& data = data_drain_->at(metric.name);
         for (auto& tv : data)
         {
             c.write(convert_.to_ticks(tv.time), tv.value);
