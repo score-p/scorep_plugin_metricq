@@ -16,3 +16,8 @@ target_link_libraries(dataheap2_plugin
         Scorep::scorep-plugin-cxx
         dataheap2::sink
 )
+
+install(
+    TARGETS dataheap2_plugin
+    LIBRARY DESTINATION lib
+)
