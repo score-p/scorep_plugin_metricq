@@ -44,9 +44,17 @@ class dataheap2_plugin : public scorep::plugin::base<dataheap2_plugin, async, on
                                                      scorep_clock, handle_oid_policy>
 {
 public:
+    dataheap2_plugin() : average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
+    {
+    }
+
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& name)
     {
         make_handle(name, Metric{ name });
+        if (average_)
+        {
+            return { scorep::plugin::metric_property(name).absolute_last().value_double() };
+        }
         return { scorep::plugin::metric_property(name).absolute_point().value_double() };
     }
 
@@ -79,13 +87,33 @@ public:
     void get_all_values(Metric& metric, Cursor& c)
     {
         auto& data = data_drain_->at(metric.name);
-        for (auto& tv : data)
+        if (average_)
         {
-            c.write(convert_.to_ticks(tv.time), tv.value);
+            int count = 0;
+            double sum = 0.;
+            for (auto& tv : data)
+            {
+                sum += tv.value;
+                count++;
+                if (count == average_)
+                {
+                    c.write(convert_.to_ticks(tv.time), sum / average_);
+                    count = 0;
+                    sum = 0.;
+                }
+            }
+        }
+        else
+        {
+            for (auto& tv : data)
+            {
+                c.write(convert_.to_ticks(tv.time), tv.value);
+            }
         }
     }
 
 private:
+    int average_;
     std::vector<std::string> metrics_;
     std::string queue_;
     std::map<std::string, std::vector<dataheap2::TimeValue>> metric_data_;
