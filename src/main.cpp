@@ -1,4 +1,5 @@
 #include "log.hpp"
+#include "timesync/timesync.hpp"
 
 #include <dataheap2/ostream.hpp>
 #include <dataheap2/simple.hpp>
@@ -10,10 +11,11 @@
 #include <nitro/lang/enumerate.hpp>
 
 #include <chrono>
-#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
+
+#include <cstdint>
 
 using namespace scorep::plugin::policy;
 
@@ -69,11 +71,15 @@ public:
         queue_ = dataheap2::subscribe(scorep::environment_variable::get("SERVER"),
                                       scorep::environment_variable::get("TOKEN", "scorepPlugin"),
                                       metrics_);
+
+        cc_time_sync_.sync_begin();
     }
 
     void stop()
     {
         convert_.synchronize_point();
+        cc_time_sync_.sync_end();
+
         data_drain_ = std::make_unique<dataheap2::SimpleDrain>(
             scorep::environment_variable::get("TOKEN", "scorepPlugin"), queue_);
         data_drain_->add(metrics_);
@@ -87,6 +93,14 @@ public:
     void get_all_values(Metric& metric, Cursor& c)
     {
         auto& data = data_drain_->at(metric.name);
+
+        // XXX sync with first metric
+        if (!cc_synced_)
+        {
+            cc_time_sync_.find_offsets(data);
+            cc_synced_ = true;
+        }
+
         if (average_)
         {
             int count = 0;
@@ -97,7 +111,7 @@ public:
                 count++;
                 if (count == average_)
                 {
-                    c.write(convert_.to_ticks(tv.time), sum / average_);
+                    c.write(convert_.to_ticks(cc_time_sync_.to_local(tv.time)), sum / average_);
                     count = 0;
                     sum = 0.;
                 }
@@ -107,17 +121,19 @@ public:
         {
             for (auto& tv : data)
             {
-                c.write(convert_.to_ticks(tv.time), tv.value);
+                c.write(convert_.to_ticks(cc_time_sync_.to_local(tv.time)), tv.value);
             }
         }
     }
 
 private:
     int average_;
+    bool cc_synced_ = false;
     std::vector<std::string> metrics_;
     std::string queue_;
     std::map<std::string, std::vector<dataheap2::TimeValue>> metric_data_;
     scorep::chrono::time_convert<> convert_;
+    timesync::CCTimeSync cc_time_sync_;
     std::unique_ptr<dataheap2::SimpleDrain> data_drain_;
 };
 
