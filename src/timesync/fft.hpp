@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <cassert>
+#include <climits>
 #include <cstddef>
 
 using complex_type = std::complex<double>;
@@ -88,10 +89,22 @@ public:
 
 class Shifter
 {
+    // Powers of two are much more efficient for FFTW.
+    static std::size_t next_power_of_2(std::size_t size)
+    {
+        size--;
+        for (size_t i = 1; i < sizeof(size) * CHAR_BIT; i *= 2)
+        {
+            size |= size >> i;
+        }
+        size++;
+        return size;
+    }
+
 public:
     Shifter(std::size_t size)
-    : size_(size), extended_size_(2 * size_ - 1), fft_(extended_size_), ifft_(extended_size_),
-      tmp_(extended_size_)
+    : size_(size), extended_size_(next_power_of_2(2 * size_ - 1)), fft_(extended_size_),
+      ifft_(extended_size_), tmp_(extended_size_)
     {
     }
 

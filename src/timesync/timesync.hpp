@@ -41,22 +41,18 @@ class CCTimeSync
 public:
     void sync_begin()
     {
-        Log::debug() << "begin sync";
         footprint_begin_ = std::make_unique<Footprint>();
-        Log::debug() << "begin sync completed";
     }
 
     void sync_end()
     {
-        Log::debug() << "end sync";
         footprint_end_ = std::make_unique<Footprint>();
-        Log::debug() << "end sync completed";
     }
 
     template <typename T>
     auto find_offsets(const T& measured_raw_signal)
     {
-        Log::debug() << "computing time offsets";
+        Log::debug() << "computing metric time offsets";
         assert(footprint_begin_);
         assert(footprint_end_);
         auto offset_begin =
@@ -69,9 +65,7 @@ public:
         offset_zero_ = footprint_begin_->time() -
                        time_point_scale(footprint_begin_->time() + offset_begin, time_rate_);
 
-        Log::debug() << "Time offset at begin: " << offset_begin.count();
-        Log::debug() << "Time offset at end: " << offset_end.count();
-        Log::debug() << "Time rate: " << time_rate_;
+        Log::info() << "offsets" << offset_begin << ", " << offset_end << ", rate: " << time_rate_;
         Log::debug() << "Offset0: " << offset_zero_.count();
     }
 
@@ -96,12 +90,11 @@ private:
         auto measured_signal = sample(measured_raw_signal, st_begin, st_end, sampling_interval_);
 
         assert(measured_signal.size() == footprint_signal.size());
-        Log::debug() << "looking for shift in " << measured_signal.size();
+        Log::debug() << "looking for shift in " << measured_signal.size() << " data points";
 
-        // TODO use persistent shifter with 2^N size...
         Shifter shifter(measured_signal.size());
         auto result = shifter(footprint_signal, measured_signal);
-        Log::debug() << "timesync with correlation of " << result.second;
+        Log::debug() << "completed timesync with correlation of " << result.second;
         return result.first;
     }
 

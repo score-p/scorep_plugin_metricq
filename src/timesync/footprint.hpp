@@ -24,7 +24,9 @@ class Footprint
 public:
     Footprint() : a(size, 1.0), b(size, 2.0)
     {
+        Log::info() << "staring synchronization pattern";
         run();
+        Log::info() << "completed synchronization pattern";
     }
 
     Clock::time_point time_begin() const
