@@ -5,6 +5,8 @@
 #include "fft.hpp"
 #include "footprint.hpp"
 
+#include <dataheap2/ostream.hpp>
+
 #include <memory>
 #include <stdexcept>
 #include <vector>

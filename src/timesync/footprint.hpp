@@ -127,27 +127,35 @@ protected:
     void check_affinity()
     {
         CPU_ZERO(&cpu_set_old_);
-        sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set_old_);
-        std::string cpu_string;
-        for (int cpu = 0; cpu < sizeof(cpu_set_t); cpu++) {
-            if (CPU_ISSET(cpu, &cpu_set_old_)) {
-                cpu_string += ",";
-                cpu_string += std::to_string(cpu);
-            }
+        auto err = sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set_old_);
+        if (err)
+        {
+            Log::error() << "failed to get thread affinity: " << strerror(errno);
+            return;
         }
 
         cpu_set_t cpu_set_target;
         CPU_ZERO(&cpu_set_target);
         CPU_SET(0, &cpu_set_target);
-        sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set_target);
-
-        Log::info() << "running footprint on CPUs: " << cpu_string;
-
+        err = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set_target);
+        if (err)
+        {
+            Log::error() << "failed to set thread affinity: " << strerror(errno);
+            return;
+        }
+        restore_affinity_ = true;
     }
 
     void restore_affinity()
     {
-        sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set_old_);
+        if (restore_affinity_)
+        {
+            auto err = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set_old_);
+            if (err)
+            {
+                Log::error() << "failed to restore thread affinity: " << strerror(errno);
+            }
+        }
     }
 
 private:
@@ -159,6 +167,7 @@ private:
     std::vector<double> b;
     std::vector<TimeValue> recording_;
 
+    bool restore_affinity_ = false;
     cpu_set_t cpu_set_old_;
 };
 } // namespace timesync
