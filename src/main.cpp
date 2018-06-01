@@ -48,6 +48,7 @@ class dataheap2_plugin : public scorep::plugin::base<dataheap2_plugin, async, on
 public:
     dataheap2_plugin() : average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
+        initialize_logger();
     }
 
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& name)
