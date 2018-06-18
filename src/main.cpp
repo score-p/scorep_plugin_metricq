@@ -122,6 +122,11 @@ public:
     void get_all_values(Metric& metric, Cursor& c)
     {
         auto& data = data_drain_->at(metric.name);
+        if (data.empty())
+        {
+            Log::error() << "no measurement data recorded for " << metric.name;
+            return;
+        }
 
         // XXX sync with first metric
         if (!cc_synced_)
