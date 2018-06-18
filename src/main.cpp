@@ -69,9 +69,37 @@ public:
     void start()
     {
         convert_.synchronize_point();
+        auto timeout_str = scorep::environment_variable::get("TIMEOUT");
+        std::chrono::seconds timeout;
+        if (timeout_str.empty())
+        {
+            Log::warn()
+                << "No timeout specified, using 1 hour.\n"
+                << "Please always specify " << scorep::environment_variable::name("TIMEOUT")
+                << " (in seconds)\n"
+                << "If your program runs longer than this, measurements will not be available.";
+            timeout = std::chrono::hours(1);
+        }
+        else
+        {
+            try
+            {
+                timeout = std::chrono::seconds(std::stoll(timeout_str));
+                if (timeout.count() <= 0)
+                {
+                    throw std::out_of_range("");
+                }
+            }
+            catch (std::logic_error&)
+            {
+                Log::error() << "Invalid timeout specified in "
+                             << scorep::environment_variable::name("TIMEOUT") << ", using 1 hour.";
+                timeout = std::chrono::hours(1);
+            }
+        }
         queue_ = dataheap2::subscribe(scorep::environment_variable::get("SERVER"),
                                       scorep::environment_variable::get("TOKEN", "scorepPlugin"),
-                                      metrics_);
+                                      metrics_, timeout);
 
         cc_time_sync_.sync_begin();
     }
