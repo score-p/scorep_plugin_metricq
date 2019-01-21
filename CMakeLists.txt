@@ -1,4 +1,4 @@
-project(dataheap2-sink-scorep)
+project(metricq-sink-scorep)
 
 cmake_minimum_required(VERSION 3.8)
 
@@ -10,7 +10,7 @@ add_subdirectory(lib)
 
 find_package(FFTW3)
 
-add_library(dataheap2_plugin
+add_library(metricq_plugin
     MODULE
         src/main.cpp
         src/log.cpp
@@ -18,15 +18,15 @@ add_library(dataheap2_plugin
         src/timesync/footprint.cpp
         src/timesync/timesync.cpp
 )
-target_compile_features(dataheap2_plugin PRIVATE cxx_std_17)
-target_link_libraries(dataheap2_plugin
+target_compile_features(metricq_plugin PRIVATE cxx_std_17)
+target_link_libraries(metricq_plugin
     PRIVATE
         Scorep::scorep-plugin-cxx
-        dataheap2::sink
+        metricq::sink
         FFTW3::fftw3
 )
 
 install(
-    TARGETS dataheap2_plugin
+    TARGETS metricq_plugin
     LIBRARY DESTINATION lib
 )

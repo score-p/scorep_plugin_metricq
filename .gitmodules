@@ -1,6 +1,6 @@
 [submodule "lib/scorep_plugin_cxx_wrapper"]
 	path = lib/scorep_plugin_cxx_wrapper
 	url = git@github.com:score-p/scorep_plugin_cxx_wrapper.git
-[submodule "lib/dataheap2"]
-	path = lib/dataheap2
-	url = git@gitlab.hrz.tu-chemnitz.de:tud-zih-dataheap/dataheap2.git
+[submodule "lib/metricq"]
+	path = lib/metricq
+	url = https://github.com/metricq/metricq.git

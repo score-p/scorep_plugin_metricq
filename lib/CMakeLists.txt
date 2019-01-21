@@ -1,4 +1,4 @@
-set(DATAHEAP2_POSITION_INDEPENDENT_CODE ON)
-add_subdirectory(dataheap2)
+set(METRICQ_POSITION_INDEPENDENT_CODE ON)
+add_subdirectory(metricq)
 
 add_subdirectory(scorep_plugin_cxx_wrapper)

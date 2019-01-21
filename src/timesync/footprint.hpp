@@ -2,7 +2,7 @@
 
 #include "../log.hpp"
 
-#include <dataheap2/types.hpp>
+#include <metricq/types.hpp>
 
 #include <sched.h>
 
@@ -11,8 +11,8 @@
 
 #include <cassert>
 
-using Clock = dataheap2::Clock;
-using TimeValue = dataheap2::TimeValue;
+using Clock = metricq::Clock;
+using TimeValue = metricq::TimeValue;
 
 namespace timesync
 {

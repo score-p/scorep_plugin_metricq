@@ -1,10 +1,10 @@
 #include "log.hpp"
 #include "timesync/timesync.hpp"
 
-#include <dataheap2/ostream.hpp>
-#include <dataheap2/simple.hpp>
-#include <dataheap2/simple_drain.hpp>
-#include <dataheap2/types.hpp>
+#include <metricq/ostream.hpp>
+#include <metricq/simple.hpp>
+#include <metricq/simple_drain.hpp>
+#include <metricq/types.hpp>
 
 #include <scorep/plugin/plugin.hpp>
 
@@ -42,11 +42,11 @@ struct Metric
 template <typename T, typename Policies>
 using handle_oid_policy = object_id<Metric, T, Policies>;
 
-class dataheap2_plugin : public scorep::plugin::base<dataheap2_plugin, async, once, post_mortem,
+class metricq_plugin : public scorep::plugin::base<metricq_plugin, async, once, post_mortem,
                                                      scorep_clock, handle_oid_policy>
 {
 public:
-    dataheap2_plugin() : average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
+    metricq_plugin() : average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
         initialize_logger();
     }
@@ -97,7 +97,7 @@ public:
                 timeout = std::chrono::hours(1);
             }
         }
-        queue_ = dataheap2::subscribe(scorep::environment_variable::get("SERVER"),
+        queue_ = metricq::subscribe(scorep::environment_variable::get("SERVER"),
                                       scorep::environment_variable::get("TOKEN", "scorepPlugin"),
                                       metrics_, timeout);
 
@@ -109,7 +109,7 @@ public:
         convert_.synchronize_point();
         cc_time_sync_.sync_end();
 
-        data_drain_ = std::make_unique<dataheap2::SimpleDrain>(
+        data_drain_ = std::make_unique<metricq::SimpleDrain>(
             scorep::environment_variable::get("TOKEN", "scorepPlugin"), queue_);
         data_drain_->add(metrics_);
         data_drain_->connect(scorep::environment_variable::get("SERVER"));
@@ -165,10 +165,10 @@ private:
     bool cc_synced_ = false;
     std::vector<std::string> metrics_;
     std::string queue_;
-    std::map<std::string, std::vector<dataheap2::TimeValue>> metric_data_;
+    std::map<std::string, std::vector<metricq::TimeValue>> metric_data_;
     scorep::chrono::time_convert<> convert_;
     timesync::CCTimeSync cc_time_sync_;
-    std::unique_ptr<dataheap2::SimpleDrain> data_drain_;
+    std::unique_ptr<metricq::SimpleDrain> data_drain_;
 };
 
-SCOREP_METRIC_PLUGIN_CLASS(dataheap2_plugin, "dataheap2")
+SCOREP_METRIC_PLUGIN_CLASS(metricq_plugin, "metricq")

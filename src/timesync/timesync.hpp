@@ -5,7 +5,7 @@
 #include "fft.hpp"
 #include "footprint.hpp"
 
-#include <dataheap2/ostream.hpp>
+#include <metricq/ostream.hpp>
 
 #include <memory>
 #include <stdexcept>
@@ -71,15 +71,15 @@ public:
         Log::debug() << "Offset0: " << offset_zero_.count();
     }
 
-    dataheap2::TimePoint to_local(dataheap2::TimePoint measurement_time)
+    metricq::TimePoint to_local(metricq::TimePoint measurement_time)
     {
         return time_point_scale(measurement_time, time_rate_) + offset_zero_;
     }
 
 private:
-    static dataheap2::TimePoint time_point_scale(dataheap2::TimePoint time, double factor)
+    static metricq::TimePoint time_point_scale(metricq::TimePoint time, double factor)
     {
-        return dataheap2::TimePoint(dataheap2::duration_cast(time.time_since_epoch() * factor));
+        return metricq::TimePoint(metricq::duration_cast(time.time_since_epoch() * factor));
     }
 
     template <typename T>
@@ -101,12 +101,12 @@ private:
     }
 
 private:
-    dataheap2::Duration sampling_interval_ = std::chrono::microseconds(2);
+    metricq::Duration sampling_interval_ = std::chrono::microseconds(2);
     std::unique_ptr<Footprint> footprint_begin_;
     std::unique_ptr<Footprint> footprint_end_;
 
     double time_rate_;                // local time per measurement time
-    dataheap2::Duration offset_zero_; // diff between local time and measurement time
+    metricq::Duration offset_zero_; // diff between local time and measurement time
 };
 
 }; // namespace timesync
