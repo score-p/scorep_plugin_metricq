@@ -43,22 +43,61 @@ template <typename T, typename Policies>
 using handle_oid_policy = object_id<Metric, T, Policies>;
 
 class metricq_plugin : public scorep::plugin::base<metricq_plugin, async, once, post_mortem,
-                                                     scorep_clock, handle_oid_policy>
+                                                   scorep_clock, handle_oid_policy>
 {
 public:
-    metricq_plugin() : average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
+    metricq_plugin()
+    : url_(scorep::environment_variable::get("SERVER")),
+      token_(scorep::environment_variable::get("TOKEN", "scorepPlugin")),
+      average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
         initialize_logger();
     }
 
-    std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& name)
+    std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& s)
     {
-        make_handle(name, Metric{ name });
-        if (average_)
+        auto selector = s;
+        if (selector == "*")
         {
-            return { scorep::plugin::metric_property(name).absolute_last().value_double() };
+            selector = "";
         }
-        return { scorep::plugin::metric_property(name).absolute_point().value_double() };
+        auto metadata = metricq::get_metadata(url_, token_, selector);
+        std::vector<scorep::plugin::metric_property> result;
+        for (const auto& elem : metadata)
+        {
+            const auto& name = elem.first;
+            const auto& meta = elem.second;
+            make_handle(name, Metric{ name });
+
+            auto property = scorep::plugin::metric_property(name, meta.description(), meta.unit())
+                                .value_double();
+
+            if (average_)
+            {
+                property.absolute_last();
+            }
+            else
+            {
+                switch (meta.scope())
+                {
+                case metricq::Metadata::Scope::last:
+                    property.absolute_last();
+                    break;
+                case metricq::Metadata::Scope::next:
+                    property.absolute_next();
+                    break;
+                case metricq::Metadata::Scope::point:
+                    property.absolute_point();
+                    break;
+                case metricq::Metadata::Scope::unknown:
+                    property.absolute_point();
+                    break;
+                }
+            }
+
+            result.push_back(property);
+        }
+        return result;
     }
 
     void add_metric(Metric& metric)
@@ -97,9 +136,7 @@ public:
                 timeout = std::chrono::hours(1);
             }
         }
-        queue_ = metricq::subscribe(scorep::environment_variable::get("SERVER"),
-                                      scorep::environment_variable::get("TOKEN", "scorepPlugin"),
-                                      metrics_, timeout);
+        queue_ = metricq::subscribe(url_, token_, metrics_, timeout);
 
         cc_time_sync_.sync_begin();
     }
@@ -109,10 +146,9 @@ public:
         convert_.synchronize_point();
         cc_time_sync_.sync_end();
 
-        data_drain_ = std::make_unique<metricq::SimpleDrain>(
-            scorep::environment_variable::get("TOKEN", "scorepPlugin"), queue_);
+        data_drain_ = std::make_unique<metricq::SimpleDrain>(token_, queue_);
         data_drain_->add(metrics_);
-        data_drain_->connect(scorep::environment_variable::get("SERVER"));
+        data_drain_->connect(url_);
         Log::debug() << "starting data drain main loop.";
         data_drain_->main_loop();
         Log::debug() << "finished data drain main loop.";
@@ -164,6 +200,8 @@ private:
     int average_;
     bool cc_synced_ = false;
     std::vector<std::string> metrics_;
+    std::string url_;
+    std::string token_;
     std::string queue_;
     std::map<std::string, std::vector<metricq::TimeValue>> metric_data_;
     scorep::chrono::time_convert<> convert_;
