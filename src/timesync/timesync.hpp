@@ -24,14 +24,15 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
     output.reserve((time_end - time_begin) / interval);
     for (auto tp = time_begin; tp < time_end; tp += interval)
     {
-        while (it->time < tp)
+        while (it != end(recording)) && (it->time < tp))
         {
-            if (it == end(recording))
-            {
-                throw std::out_of_range("insufficient time range for sampling");
-            }
             it++;
         }
+        if (it == end(recording))
+        {
+            throw std::out_of_range("Insufficient time range for sampling - maybe clock drift is too large?");
+        }
+
         // now: tp <= it->time
         output.push_back(it->value);
     }
