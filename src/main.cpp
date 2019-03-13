@@ -170,13 +170,12 @@ public:
             try
             {
                 cc_time_sync_.find_offsets(data);
+                cc_synced_ = true;
             }
             catch (std::exception& e)
             {
                 Log::warn() << "Time sync failed for metric: " << metric.name;
             }
-
-            cc_synced_ = true;
         }
 
         if (average_)
