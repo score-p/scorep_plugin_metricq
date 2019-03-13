@@ -167,7 +167,15 @@ public:
         // XXX sync with first metric
         if (!cc_synced_)
         {
-            cc_time_sync_.find_offsets(data);
+            try
+            {
+                cc_time_sync_.find_offsets(data);
+            }
+            catch (std::exception& e)
+            {
+                Log::warn() << "Time sync failed for metric: " << metric.name;
+            }
+
             cc_synced_ = true;
         }
 
