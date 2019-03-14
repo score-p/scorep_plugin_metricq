@@ -152,6 +152,25 @@ public:
         Log::debug() << "starting data drain main loop.";
         data_drain_->main_loop();
         Log::debug() << "finished data drain main loop.";
+
+        for (auto& metric : get_handles())
+        {
+            // XXX sync with first metric
+            if (!cc_synced_)
+            {
+                try
+                {
+                    auto& data = data_drain_->at(metric.name);
+
+                    cc_time_sync_.find_offsets(data);
+                    cc_synced_ = true;
+                }
+                catch (std::exception& e)
+                {
+                    Log::warn() << "Time sync failed for metric: " << metric.name;
+                }
+            }
+        }
     }
 
     template <class Cursor>
@@ -162,20 +181,6 @@ public:
         {
             Log::error() << "no measurement data recorded for " << metric.name;
             return;
-        }
-
-        // XXX sync with first metric
-        if (!cc_synced_)
-        {
-            try
-            {
-                cc_time_sync_.find_offsets(data);
-                cc_synced_ = true;
-            }
-            catch (std::exception& e)
-            {
-                Log::warn() << "Time sync failed for metric: " << metric.name;
-            }
         }
 
         if (average_)
