@@ -160,6 +160,7 @@ public:
             {
                 try
                 {
+                    Log::debug() << "Trying timesync with metric: " << metric.name;
                     auto& data = data_drain_->at(metric.name);
 
                     cc_time_sync_.find_offsets(data);
@@ -167,8 +168,7 @@ public:
                 }
                 catch (std::exception& e)
                 {
-                    Log::warn() << "Time sync failed for metric: " << metric.name
-                                << " with error: " << e.what();
+                    Log::warn() << "Timesync failed with error: " << e.what();
                 }
             }
         }
