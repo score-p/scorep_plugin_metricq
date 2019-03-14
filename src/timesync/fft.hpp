@@ -13,7 +13,7 @@
 
 using complex_type = std::complex<double>;
 
-isfinite(const std::complex<double>& z)
+bool isfinite(const std::complex<double>& z)
 {
     return std::isfinite(z.real()) && std::isfinite(z.imag());
 }
