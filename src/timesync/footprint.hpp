@@ -105,7 +105,7 @@ protected:
         recording_.resize(0);
         recording_.reserve(12);
 
-        time_begin_ = low(std::chrono::seconds(1));
+        time_begin_ = low(std::chrono::seconds(3));
 
         low(std::chrono::seconds(1));
         high(std::chrono::milliseconds(419));
@@ -119,7 +119,7 @@ protected:
         high(std::chrono::milliseconds(467));
         time_end_ = low(std::chrono::seconds(1));
 
-        low(std::chrono::seconds(1));
+        low(std::chrono::seconds(3));
 
         restore_affinity();
     }
