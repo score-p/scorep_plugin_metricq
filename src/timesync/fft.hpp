@@ -115,13 +115,21 @@ public:
         assert(std::distance(right_begin, right_end) == size_);
 
         fft_(left_begin, left_end);
+        assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
+
         std::copy(fft_.out_begin(), fft_.out_end(), tmp_.begin());
+
         fft_(std::reverse_iterator(right_end), std::reverse_iterator(right_begin));
-        for (int i = 0; i < size_; i++)
+        assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
+
+        for (int i = 0; i < extended_size_; i++)
         {
             tmp_[i] *= fft_.out_begin()[i];
         }
+
         ifft_(tmp_.begin(), tmp_.end());
+        assert(std::distance(ifft_.out_begin(), ifft_.out_end()) == extended_size_);
+
         auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
             if (!std::isfinite(a))
                 return true;
