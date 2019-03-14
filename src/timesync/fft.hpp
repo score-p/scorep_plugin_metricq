@@ -122,7 +122,13 @@ public:
             tmp_[i] *= fft_.out_begin()[i];
         }
         ifft_(tmp_.begin(), tmp_.end());
-        auto it = std::max_element(ifft_.out_begin(), ifft_.out_end());
+        auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
+            if (std::isnan(a))
+                return true;
+            if (std::isnan(b))
+                return false;
+            return a < b;
+        });
         return { long(size_) - 1 - std::distance(ifft_.out_begin(), it), *it };
     };
 
