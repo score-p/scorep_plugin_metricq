@@ -167,7 +167,8 @@ public:
                 }
                 catch (std::exception& e)
                 {
-                    Log::warn() << "Time sync failed for metric: " << metric.name;
+                    Log::warn() << "Time sync failed for metric: " << metric.name
+                                << " with error: " << e.what();
                 }
             }
         }
