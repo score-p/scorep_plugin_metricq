@@ -13,6 +13,11 @@
 
 using complex_type = std::complex<double>;
 
+isfinite(const std::complex<double>& z)
+{
+    return std::isfinite(z.real()) && std::isfinite(z.imag());
+}
+
 template <typename IN, typename OUT>
 class FFTBase
 {
@@ -58,6 +63,19 @@ public:
     OUT* out_end()
     {
         return out_ + size_;
+    }
+
+    bool isfinite() const
+    {
+        for (auto it = out_begin(); it != out_end(); ++it)
+        {
+            using std::isfinite;
+            if (!isfinite(*it))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
 protected:
@@ -115,20 +133,37 @@ public:
         assert(std::distance(right_begin, right_end) == size_);
 
         fft_(left_begin, left_end);
+        if (!fft_.isfinite())
+        {
+            throw std::runtime_error("left is not finite");
+        }
         assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
 
         std::copy(fft_.out_begin(), fft_.out_end(), tmp_.begin());
 
         fft_(std::reverse_iterator(right_end), std::reverse_iterator(right_begin));
+        if (!fft_.isfinite())
+        {
+            throw std::runtime_error("right is not finite");
+        }
         assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
 
         for (int i = 0; i < extended_size_; i++)
         {
             tmp_[i] *= fft_.out_begin()[i];
+            if (!isfinite(tmp_[i]))
+            {
+                throw std::runtime_error("product is not finite");
+            }
         }
 
         ifft_(tmp_.begin(), tmp_.end());
         assert(std::distance(ifft_.out_begin(), ifft_.out_end()) == extended_size_);
+
+        if (!fft_.isfinite())
+        {
+            throw std::runtime_error("cross-correlation is not finite");
+        }
 
         auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
             if (!std::isfinite(a))
