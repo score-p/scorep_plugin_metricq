@@ -20,7 +20,7 @@ inline bool my_isfinite(complex_type z)
 
 inline bool my_isfinite(double a)
 {
-    return std::isfinite(a));
+    return std::isfinite(a);
 }
 
 template <typename IN, typename OUT>
