@@ -96,7 +96,7 @@ private:
         auto st_end = footprint.time_end();
 
         Log::debug() << "Sampling footprint from " << st_begin.time_since_epoch().count() << " to "
-                     << st_end.time_since_epoch().count() << " with interval"
+                     << st_end.time_since_epoch().count() << " with interval "
                      << sampling_interval_.count() << ":";
         auto footprint_signal = sample(footprint.recording(), st_begin, st_end, sampling_interval_);
 
@@ -109,7 +109,8 @@ private:
 
         Shifter shifter(measured_signal.size());
         auto result = shifter(footprint_signal, measured_signal);
-        Log::debug() << "completed timesync with correlation of " << result.second;
+        Log::debug() << "completed timesync with correlation of " << result.second << " and "
+                     << result.first;
         return result.first;
     }
 
