@@ -13,6 +13,16 @@
 
 using complex_type = std::complex<double>;
 
+inline bool my_isfinite(complex_type z)
+{
+    return std::isfinite(z.real()) && std::isfinite(z.imag());
+}
+
+inline bool my_isfinite(double a)
+{
+    return std::isfinite(a));
+}
+
 template <typename IN, typename OUT>
 class FFTBase
 {
@@ -60,17 +70,11 @@ public:
         return out_ + size_;
     }
 
-    friend bool isfinite(complex_type z)
-    {
-        return std::isfinite(z.real()) && std::isfinite(z.imag());
-    }
-
     bool isfinite()
     {
         for (auto it = out_begin(); it != out_end(); ++it)
         {
-            using std::isfinite;
-            if (!isfinite(*it))
+            if (!my_isfinite(*it))
             {
                 return false;
             }
