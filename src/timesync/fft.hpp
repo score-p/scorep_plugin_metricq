@@ -65,7 +65,7 @@ public:
         return out_ + size_;
     }
 
-    bool isfinite() const
+    bool isfinite()
     {
         for (auto it = out_begin(); it != out_end(); ++it)
         {
