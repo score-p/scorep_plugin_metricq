@@ -123,9 +123,9 @@ public:
         }
         ifft_(tmp_.begin(), tmp_.end());
         auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
-            if (std::isnan(a))
+            if (!std::isfinite(a))
                 return true;
-            if (std::isnan(b))
+            if (!std::isfinite(b))
                 return false;
             return a < b;
         });
