@@ -20,6 +20,8 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
     using std::end;
     auto it = begin(recording);
 
+    assert(!recording.empty());
+
     std::vector<double> output;
     output.reserve((time_end - time_begin) / interval);
     for (auto tp = time_begin; tp < time_end; tp += interval)
@@ -30,6 +32,9 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
         }
         if (it == end(recording))
         {
+            Log::error() << "Failed sampling with: " << begin(recording)->time << " - "
+                         << (it - 1)->time;
+
             throw std::out_of_range(
                 "Insufficient time range for sampling - maybe clock drift is too large?");
         }
@@ -90,7 +95,13 @@ private:
         auto st_begin = footprint.time_begin();
         auto st_end = footprint.time_end();
 
+        Log::debug() << "Sampling footprint from " << st_begin.time_since_epoch().count() << " to "
+                     << st_end.time_since_epoch().count() << " with interval"
+                     << sampling_interval_.count() << ":";
         auto footprint_signal = sample(footprint.recording(), st_begin, st_end, sampling_interval_);
+
+        Log::debug() << "Sampling raw signal:";
+
         auto measured_signal = sample(measured_raw_signal, st_begin, st_end, sampling_interval_);
 
         assert(measured_signal.size() == footprint_signal.size());
