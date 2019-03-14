@@ -113,7 +113,7 @@ private:
         auto result = shifter(footprint_signal, measured_signal);
         Log::debug() << "completed timesync with correlation of " << result.second << " and "
                      << result.first;
-        if (isnan(result.second) || result.second <= 0)
+        if (std::isnan(result.second) || result.second <= 0)
         {
             throw std::runtime_error("Correlation doesn't look good to me :(");
         }
