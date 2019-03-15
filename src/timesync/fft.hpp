@@ -195,7 +195,8 @@ public:
         {
             throw std::runtime_error("left is not finite");
         }
-        assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
+        assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
+               sizey<complex_type>(extended_size_));
 
         std::copy(fft_.out_begin(), fft_.out_end(), tmp_.begin());
 
@@ -204,7 +205,8 @@ public:
         {
             throw std::runtime_error("right is not finite");
         }
-        assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
+        assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
+               sizey<complex_type>(extended_size_));
 
         for (int i = 0; i < tmp_.size(); i++)
         {
