@@ -155,7 +155,7 @@ public:
         for (int i = 0; i < extended_size_; i++)
         {
             tmp_[i] *= fft_.out_begin()[i];
-            if (!isfinite(tmp_[i]))
+            if (!my_isfinite(tmp_[i]))
             {
                 throw std::runtime_error("product is not finite");
             }
