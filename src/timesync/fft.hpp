@@ -148,6 +148,7 @@ public:
         assert(out_);
         plan_ =
             fftw_plan_dft_r2c_1d(size_, in_, reinterpret_cast<fftw_complex*>(out_), FFTW_ESTIMATE);
+        assert(plan_);
     }
 };
 
@@ -160,6 +161,8 @@ public:
         assert(out_);
         plan_ =
             fftw_plan_dft_c2r_1d(size_, reinterpret_cast<fftw_complex*>(in_), out_, FFTW_ESTIMATE);
+
+        assert(plan_);
     }
 };
 
