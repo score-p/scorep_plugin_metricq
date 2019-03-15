@@ -164,7 +164,7 @@ public:
         ifft_(tmp_.begin(), tmp_.end());
         assert(std::distance(ifft_.out_begin(), ifft_.out_end()) == extended_size_);
 
-        if (!fft_.isfinite())
+        if (!ifft_.isfinite())
         {
             throw std::runtime_error("cross-correlation is not finite");
         }
