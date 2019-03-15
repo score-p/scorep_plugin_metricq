@@ -24,6 +24,8 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
 
     assert(!recording.empty());
 
+    assert(time_begin <= time_end);
+
     std::vector<double> output;
     output.reserve((time_end - time_begin) / interval);
     for (auto tp = time_begin; tp < time_end; tp += interval)
@@ -107,6 +109,7 @@ private:
         auto measured_signal = sample(measured_raw_signal, st_begin, st_end, sampling_interval_);
 
         assert(measured_signal.size() == footprint_signal.size());
+        assert(!measured_signal.empty());
         Log::debug() << "looking for shift in " << measured_signal.size() << " data points";
 
         Shifter shifter(measured_signal.size());

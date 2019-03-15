@@ -13,6 +13,8 @@
 
 using complex_type = std::complex<double>;
 
+static_assert(sizeof(complex_type) == sizeof(fftw_complex), "You're fucked.");
+
 inline bool my_isfinite(complex_type z)
 {
     return std::isfinite(z.real()) && std::isfinite(z.imag());
@@ -97,8 +99,8 @@ public:
 
 protected:
     std::size_t size_;
-    IN* in_;
-    OUT* out_;
+    IN* in_ = nullptr;
+    OUT* out_ = nullptr;
     fftw_plan plan_;
 };
 
@@ -107,6 +109,8 @@ class FFT : public FFTBase<double, complex_type>
 public:
     FFT(std::size_t size) : FFTBase(size)
     {
+        assert(in_);
+        assert(out_);
         plan_ =
             fftw_plan_dft_r2c_1d(size_, in_, reinterpret_cast<fftw_complex*>(out_), FFTW_ESTIMATE);
     }
@@ -117,6 +121,8 @@ class IFFT : public FFTBase<complex_type, double>
 public:
     IFFT(std::size_t size) : FFTBase(size)
     {
+        assert(in_);
+        assert(out_);
         plan_ =
             fftw_plan_dft_c2r_1d(size_, reinterpret_cast<fftw_complex*>(in_), out_, FFTW_ESTIMATE);
     }
