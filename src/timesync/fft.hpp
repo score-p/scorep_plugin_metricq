@@ -174,11 +174,20 @@ public:
 
         auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
             if (!std::isfinite(a))
+            {
+                std::cerr << a << " isn't finite" << std::endl;
                 return true;
+            }
             if (!std::isfinite(b))
+            {
+                std::cerr << b << " isn't finite" << std::endl;
                 return false;
+            }
             return a < b;
         });
+
+        std::cerr << "Found max element: " << std::distance(ifft_.out_begin(), it) << ": " << *it
+                  << std::endl;
         return { long(size_) - 1 - std::distance(ifft_.out_begin(), it), *it };
     };
 
