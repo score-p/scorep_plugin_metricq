@@ -76,7 +76,7 @@ public:
         fftw_execute(plan_);
     }
 
-    in_size() const
+    std::size_t in_size() const
     {
         return sizey<IN>(size_);
     }
@@ -91,7 +91,7 @@ public:
         return in_ + in_size();
     }
 
-    out_size() const
+    std::size_t out_size() const
     {
         return sizey<OUT>(size_);
     }
