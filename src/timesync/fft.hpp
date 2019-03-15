@@ -25,13 +25,37 @@ inline bool my_isfinite(double a)
     return std::isfinite(a);
 }
 
+template <typename T>
+struct Helper
+{
+    static std::size_t size(std::size_t s)
+    {
+        return s;
+    }
+};
+
+template <>
+struct Helper<complex_type>
+{
+    static std::size_t size(std::size_t s)
+    {
+        return s / 2 + 1;
+    }
+};
+
+template <typename T>
+size_t sizey(size_t s)
+{
+    return Helper<T>::size(s);
+}
+
 template <typename IN, typename OUT>
 class FFTBase
 {
 public:
     FFTBase(std::size_t size)
-    : size_(size), in_((IN*)fftw_malloc(sizeof(IN) * size)),
-      out_((OUT*)fftw_malloc(sizeof(OUT) * size))
+    : size_(size), in_((IN*)fftw_malloc(sizeof(IN) * in_size())),
+      out_((OUT*)fftw_malloc(sizeof(OUT) * out_size()))
     {
     }
 
@@ -46,10 +70,15 @@ public:
     const void operator()(IT begin, IT end)
     {
         auto len = std::distance(begin, end);
-        assert(len <= size_);
+        assert(len <= in_size());
         std::copy(begin, end, in_);
-        std::fill(in_ + len, in_ + size_, IN());
+        std::fill(in_ + len, in_ + in_size(), IN());
         fftw_execute(plan_);
+    }
+
+    in_size() const
+    {
+        return sizey<IN>(size_);
     }
 
     IN* in_begin()
@@ -59,7 +88,12 @@ public:
 
     IN* in_end()
     {
-        return in_ + size_;
+        return in_ + in_size();
+    }
+
+    out_size() const
+    {
+        return sizey<OUT>(size_);
     }
 
     OUT* out_begin()
@@ -69,7 +103,7 @@ public:
 
     OUT* out_end()
     {
-        return out_ + size_;
+        return out_ + out_size();
     }
 
     bool isfinite()
@@ -79,8 +113,8 @@ public:
         {
             if (!my_isfinite(*it))
             {
-                std::cerr << "INPUT Index " << std::distance(in_begin(), it) << " out of " << size_
-                          << " isn't finite\n";
+                std::cerr << "INPUT Index " << std::distance(in_begin(), it) << " out of "
+                          << in_size() << " isn't finite: " << *it << "\n";
                 result = false;
             }
         }
@@ -90,10 +124,11 @@ public:
             if (!my_isfinite(*it))
             {
                 std::cerr << "OUTPUT Index " << std::distance(out_begin(), it) << " out of "
-                          << size_ << " isn't finite\n";
+                          << out_size() << " isn't finite: " << *it << "\n";
                 result = false;
             }
         }
+
         return result;
     }
 
@@ -171,7 +206,7 @@ public:
         }
         assert(std::distance(fft_.out_begin(), fft_.out_end()) == extended_size_);
 
-        for (int i = 0; i < extended_size_; i++)
+        for (int i = 0; i < tmp_.size(); i++)
         {
             tmp_[i] *= fft_.out_begin()[i];
             if (!my_isfinite(tmp_[i]))
