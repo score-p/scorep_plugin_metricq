@@ -72,14 +72,17 @@ public:
 
     bool isfinite()
     {
+        bool result = true;
         for (auto it = out_begin(); it != out_end(); ++it)
         {
             if (!my_isfinite(*it))
             {
-                return false;
+                std::cerr << "Index " << std::distance(out_begin(), it) << " out of " << size_
+                          << " isn't finite\n";
+                result = false;
             }
         }
-        return true;
+        return result;
     }
 
 protected:
