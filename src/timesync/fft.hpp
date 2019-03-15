@@ -73,12 +73,22 @@ public:
     bool isfinite()
     {
         bool result = true;
+        for (auto it = in_begin(); it != in_end(); ++it)
+        {
+            if (!my_isfinite(*it))
+            {
+                std::cerr << "INPUT Index " << std::distance(in_begin(), it) << " out of " << size_
+                          << " isn't finite\n";
+                result = false;
+            }
+        }
+
         for (auto it = out_begin(); it != out_end(); ++it)
         {
             if (!my_isfinite(*it))
             {
-                std::cerr << "Index " << std::distance(out_begin(), it) << " out of " << size_
-                          << " isn't finite\n";
+                std::cerr << "OUTPUT Index " << std::distance(out_begin(), it) << " out of "
+                          << size_ << " isn't finite\n";
                 result = false;
             }
         }
