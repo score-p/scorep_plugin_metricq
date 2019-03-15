@@ -180,7 +180,7 @@ class Shifter
 public:
     Shifter(std::size_t size)
     : size_(size), extended_size_(next_power_of_2(2 * size_ - 1)), fft_(extended_size_),
-      ifft_(extended_size_), tmp_(extended_size_)
+      ifft_(extended_size_), tmp_(sizey<complex_type>(extended_size_))
     {
     }
 
