@@ -57,7 +57,7 @@ public:
     : size_(size), in_((IN*)fftw_malloc(sizeof(IN) * in_size())),
       out_((OUT*)fftw_malloc(sizeof(OUT) * out_size()))
     {
-        assert(_in);
+        assert(in_);
         assert(out_);
     }
 
