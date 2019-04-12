@@ -26,7 +26,7 @@ inline bool my_isfinite(double a)
 }
 
 template <typename T>
-struct Helper
+struct SizeHelper
 {
     static std::size_t size(std::size_t s)
     {
@@ -34,8 +34,9 @@ struct Helper
     }
 };
 
+// The complex vectors in the FFTW have less elements
 template <>
-struct Helper<complex_type>
+struct SizeHelper<complex_type>
 {
     static std::size_t size(std::size_t s)
     {
@@ -44,9 +45,9 @@ struct Helper<complex_type>
 };
 
 template <typename T>
-size_t sizey(size_t s)
+size_t type_size(size_t s)
 {
-    return Helper<T>::size(s);
+    return SizeHelper<T>::size(s);
 }
 
 template <typename IN, typename OUT>
@@ -80,7 +81,7 @@ public:
 
     std::size_t in_size() const
     {
-        return sizey<IN>(size_);
+        return type_size<IN>(size_);
     }
 
     IN* in_begin()
@@ -95,7 +96,7 @@ public:
 
     std::size_t out_size() const
     {
-        return sizey<OUT>(size_);
+        return type_size<OUT>(size_);
     }
 
     OUT* out_begin()
@@ -110,14 +111,11 @@ public:
 
     bool isfinite()
     {
-        bool result = true;
         for (auto it = in_begin(); it != in_end(); ++it)
         {
             if (!my_isfinite(*it))
             {
-                std::cerr << "INPUT Index " << std::distance(in_begin(), it) << " out of "
-                          << in_size() << " isn't finite: " << *it << "\n";
-                result = false;
+                return false;
             }
         }
 
@@ -125,13 +123,10 @@ public:
         {
             if (!my_isfinite(*it))
             {
-                std::cerr << "OUTPUT Index " << std::distance(out_begin(), it) << " out of "
-                          << out_size() << " isn't finite: " << *it << "\n";
-                result = false;
+                return false;
             }
         }
-
-        return result;
+        return true;
     }
 
 protected:
@@ -185,7 +180,7 @@ class Shifter
 public:
     Shifter(std::size_t size)
     : size_(size), extended_size_(next_power_of_2(2 * size_ - 1)), fft_(extended_size_),
-      ifft_(extended_size_), tmp_(sizey<complex_type>(extended_size_))
+      ifft_(extended_size_), tmp_(type_size<complex_type>(extended_size_))
     {
     }
 
@@ -201,7 +196,7 @@ public:
             throw std::runtime_error("left is not finite");
         }
         assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
-               sizey<complex_type>(extended_size_));
+               type_size<complex_type>(extended_size_));
 
         std::copy(fft_.out_begin(), fft_.out_end(), tmp_.begin());
 
@@ -211,7 +206,7 @@ public:
             throw std::runtime_error("right is not finite");
         }
         assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
-               sizey<complex_type>(extended_size_));
+               type_size<complex_type>(extended_size_));
 
         for (int i = 0; i < tmp_.size(); i++)
         {
