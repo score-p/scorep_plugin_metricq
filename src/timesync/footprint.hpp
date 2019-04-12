@@ -2,6 +2,8 @@
 
 #include "../log.hpp"
 
+#include "msequence.hpp"
+
 #include <metricq/types.hpp>
 
 #include <sched.h>
@@ -96,6 +98,19 @@ protected:
         } while (time < end);
         recording_.emplace_back(time, 1.0);
         return time;
+    }
+
+    template <typename DURATION>
+    auto run(bool high_low, DURATION duration)
+    {
+        if (high_low)
+        {
+            return high(duration);
+        }
+        else
+        {
+            return low(duration);
+        }
     }
 
     void run()
