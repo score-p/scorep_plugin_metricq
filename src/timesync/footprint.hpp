@@ -24,7 +24,7 @@ uint64_t sqrtsd_loop_(double* buffer, uint64_t elems, uint64_t repeat);
 class Footprint
 {
 public:
-    Footprint() : a(size, 1.0), b(size, 2.0)
+    Footprint() : compute_vec_a_(compute_size, 1.0), compute_vec_b_(compute_size, 2.0)
     {
         Log::info() << "staring synchronization pattern";
         run();
@@ -53,24 +53,8 @@ public:
 
 private:
 protected:
-    void low()
-    {
-        sqrtsd_loop_(a.data(), a.size(), 256);
-    }
-
-    void high()
-    {
-        double m = 0.0;
-        for (size_t i = 0; i < a.size(); i++)
-        {
-            m += a[i] * b[i];
-        }
-        if (m == 42.0)
-        {
-            // prevent optimization, sure there is an easier way
-            __asm__ __volatile__("mfence;" :::);
-        }
-    }
+    void low();
+    void high();
 
     template <typename DURATION>
     auto low(DURATION duration)
@@ -113,73 +97,20 @@ protected:
         }
     }
 
-    void run()
-    {
-        check_affinity();
+    void run();
 
-        recording_.resize(0);
-        recording_.reserve(12);
-
-        time_begin_ = low(std::chrono::seconds(3));
-
-        low(std::chrono::seconds(1));
-        high(std::chrono::milliseconds(419));
-        low(std::chrono::milliseconds(283));
-        high(std::chrono::milliseconds(179));
-        low(std::chrono::milliseconds(73));
-        high(std::chrono::milliseconds(31));
-        low(std::chrono::milliseconds(127));
-        high(std::chrono::milliseconds(233));
-        low(std::chrono::milliseconds(353));
-        high(std::chrono::milliseconds(467));
-        time_end_ = low(std::chrono::seconds(1));
-
-        low(std::chrono::seconds(3));
-
-        restore_affinity();
-    }
-
-    void check_affinity()
-    {
-        CPU_ZERO(&cpu_set_old_);
-        auto err = sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set_old_);
-        if (err)
-        {
-            Log::error() << "failed to get thread affinity: " << strerror(errno);
-            return;
-        }
-
-        cpu_set_t cpu_set_target;
-        CPU_ZERO(&cpu_set_target);
-        CPU_SET(0, &cpu_set_target);
-        err = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set_target);
-        if (err)
-        {
-            Log::error() << "failed to set thread affinity: " << strerror(errno);
-            return;
-        }
-        restore_affinity_ = true;
-    }
-
-    void restore_affinity()
-    {
-        if (restore_affinity_)
-        {
-            auto err = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set_old_);
-            if (err)
-            {
-                Log::error() << "failed to restore thread affinity: " << strerror(errno);
-            }
-        }
-    }
+    void check_affinity();
+    void restore_affinity();
 
 private:
-    static constexpr std::size_t size = 2048;
+    static constexpr std::size_t compute_size = 256;
+    static constexpr std::size_t compute_rep = 58;
+    static constexpr std::size_t nop_rep = 209;
     Clock::time_point time_begin_;
     Clock::time_point time_end_;
 
-    std::vector<double> a;
-    std::vector<double> b;
+    std::vector<double> compute_vec_a_;
+    std::vector<double> compute_vec_b_;
     std::vector<TimeValue> recording_;
 
     bool restore_affinity_ = false;

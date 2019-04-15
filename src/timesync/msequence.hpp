@@ -1,3 +1,5 @@
+#pragma once
+
 #include <initializer_list>
 #include <iostream>
 #include <optional>
@@ -34,6 +36,14 @@ private:
             return { 4, 1 };
         case 5:
             return { 5, 2 };
+        case 6:
+            return { 6, 1 };
+        case 7:
+            return { 7, 1 };
+        case 8:
+            return { 8, 6, 5, 1 };
+        case 9:
+            return { 9, 4 };
         case 10:
             return { 10, 3 };
         case 11:

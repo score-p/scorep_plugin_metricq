@@ -117,7 +117,7 @@ private:
 
         Shifter shifter(measured_signal.size(), tag);
         auto result = shifter(footprint_signal, measured_signal);
-        Log::debug() << "completed timesync with correlation of " << result.second << " and "
+        Log::debug() << "completed timesync with correlation of " << result.second << " and offset "
                      << result.first;
         if (std::isnan(result.second) || result.second <= 0)
         {
