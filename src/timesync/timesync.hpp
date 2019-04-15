@@ -2,8 +2,8 @@
 
 #include "../log.hpp"
 
-#include "fft.hpp"
 #include "footprint.hpp"
+#include "shifter.hpp"
 
 #include <metricq/ostream.hpp>
 
@@ -36,7 +36,8 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
         }
         if (it == end(recording))
         {
-            Log::error() << "Failed sampling with: " << begin(recording)->time << " - "
+            Log::error() << "Failed to sample in range " << time_begin << " to " << time_end;
+            Log::error() << "Recording goes from: " << begin(recording)->time << " to "
                          << (it - 1)->time;
 
             throw std::out_of_range(
@@ -65,12 +66,14 @@ public:
     template <typename T>
     auto find_offsets(const T& measured_raw_signal)
     {
-        Log::debug() << "computing metric time offsets";
         assert(footprint_begin_);
         assert(footprint_end_);
+        Log::debug() << "find begin offsets...";
         auto offset_begin =
-            find_offset(*footprint_begin_, measured_raw_signal) * sampling_interval_;
-        auto offset_end = find_offset(*footprint_end_, measured_raw_signal) * sampling_interval_;
+            find_offset(*footprint_begin_, measured_raw_signal, "begin") * sampling_interval_;
+        Log::debug() << "find end offsets...";
+        auto offset_end =
+            find_offset(*footprint_end_, measured_raw_signal, "end") * sampling_interval_;
 
         auto footprint_duration = footprint_end_->time() - footprint_begin_->time();
         auto measurement_duration = footprint_duration + offset_end - offset_begin;
@@ -94,7 +97,7 @@ private:
     }
 
     template <typename T>
-    auto find_offset(Footprint& footprint, const T& measured_raw_signal)
+    auto find_offset(Footprint& footprint, const T& measured_raw_signal, const std::string& tag)
     {
         auto st_begin = footprint.time_begin();
         auto st_end = footprint.time_end();
@@ -112,7 +115,7 @@ private:
         assert(!measured_signal.empty());
         Log::debug() << "looking for shift in " << measured_signal.size() << " data points";
 
-        Shifter shifter(measured_signal.size());
+        Shifter shifter(measured_signal.size(), tag);
         auto result = shifter(footprint_signal, measured_signal);
         Log::debug() << "completed timesync with correlation of " << result.second << " and "
                      << result.first;

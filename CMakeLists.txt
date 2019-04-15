@@ -16,6 +16,7 @@ add_library(metricq_plugin
         src/log.cpp
 
         src/timesync/footprint.cpp
+        src/timesync/shifter.cpp
         src/timesync/timesync.cpp
 )
 target_compile_features(metricq_plugin PRIVATE cxx_std_17)
