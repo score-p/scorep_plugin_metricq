@@ -15,6 +15,7 @@
 
 using Clock = metricq::Clock;
 using TimeValue = metricq::TimeValue;
+using Duration = metricq::Duration;
 
 namespace timesync
 {
@@ -24,10 +25,11 @@ uint64_t sqrtsd_loop_(double* buffer, uint64_t elems, uint64_t repeat);
 class Footprint
 {
 public:
-    Footprint() : compute_vec_a_(compute_size, 1.0), compute_vec_b_(compute_size, 2.0)
+    Footprint(int msequence_exponent, Duration quantum)
+    : compute_vec_a_(compute_size, 1.0), compute_vec_b_(compute_size, 2.0)
     {
         Log::info() << "staring synchronization pattern";
-        run();
+        run(msequence_exponent, quantum);
         Log::info() << "completed synchronization pattern";
     }
 
@@ -51,13 +53,11 @@ public:
         return recording_;
     };
 
-private:
 protected:
     void low();
     void high();
 
-    template <typename DURATION>
-    auto low(DURATION duration)
+    auto low(Duration duration)
     {
         auto time = Clock::now();
         auto end = time + duration;
@@ -70,8 +70,7 @@ protected:
         return time;
     }
 
-    template <typename DURATION>
-    auto high(DURATION duration)
+    auto high(Duration duration)
     {
         auto time = Clock::now();
         auto end = time + duration;
@@ -84,8 +83,7 @@ protected:
         return time;
     }
 
-    template <typename DURATION>
-    auto run(bool high_low, DURATION duration)
+    auto run(bool high_low, Duration duration)
     {
         if (high_low)
         {
@@ -97,7 +95,7 @@ protected:
         }
     }
 
-    void run();
+    void run(int msequence_exponent, Duration quantum);
 
     void check_affinity();
     void restore_affinity();

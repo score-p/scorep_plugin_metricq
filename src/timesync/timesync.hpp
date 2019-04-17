@@ -54,14 +54,32 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
 class CCTimeSync
 {
 public:
+    CCTimeSync()
+    {
+        auto exponent_str = scorep::environment_variable::get("SNYC_EXPONENT");
+        if (!exponent_str.empty())
+        {
+            footprint_msequence_exponent_ = std::stoi(exponent_str);
+        }
+        auto quantum_str = scorep::environment_variable::get("SYNC_QUANTUM");
+        if (!quantum_str.empty())
+        {
+            footprint_quantum_ = metricq::duration_parse(quantum_str);
+        }
+        Log::debug() << "Using a footprint sequence with exponent " << footprint_msequence_exponent_
+                     << " and a time quantum of " << footprint_quantum_;
+    }
+
     void sync_begin()
     {
-        footprint_begin_ = std::make_unique<Footprint>();
+        footprint_begin_ =
+            std::make_unique<Footprint>(footprint_msequence_exponent_, footprint_quantum_);
     }
 
     void sync_end()
     {
-        footprint_end_ = std::make_unique<Footprint>();
+        footprint_end_ =
+            std::make_unique<Footprint>(footprint_msequence_exponent_, footprint_quantum_);
     }
 
     template <typename T>
@@ -153,6 +171,9 @@ private:
 
 private:
     metricq::Duration sampling_interval_ = std::chrono::microseconds(2);
+    int footprint_msequence_exponent_ = 11;
+    metricq::Duration footprint_quantum_ = std::chrono::milliseconds(1);
+
     std::unique_ptr<Footprint> footprint_begin_;
     std::unique_ptr<Footprint> footprint_end_;
 

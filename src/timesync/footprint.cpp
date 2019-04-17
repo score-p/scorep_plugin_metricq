@@ -66,16 +66,14 @@ void Footprint::restore_affinity()
     }
 }
 
-void Footprint::run()
+void Footprint::run(int msequence_exponent, Duration quantum)
 {
     check_affinity();
 
     recording_.resize(0);
     recording_.reserve(4096);
 
-    constexpr int n = 11;
-    constexpr auto time_quantum = std::chrono::milliseconds(1);
-    auto sequence = GroupedBinaryMSequence(n);
+    auto sequence = GroupedBinaryMSequence(msequence_exponent);
 
     time_begin_ = low(std::chrono::seconds(3));
     time_end_ = time_begin_;
@@ -83,7 +81,7 @@ void Footprint::run()
     while (auto elem = sequence.take())
     {
         auto [is_high, length] = *elem;
-        auto duration = time_quantum * length;
+        auto duration = quantum * length;
         deadline += duration;
         if (deadline <= time_end_)
         {

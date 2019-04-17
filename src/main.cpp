@@ -121,7 +121,7 @@ public:
     {
         convert_.synchronize_point();
         auto timeout_str = scorep::environment_variable::get("TIMEOUT");
-        std::chrono::seconds timeout;
+        auto timeout = metricq::duration_parse(timeout_str);
         if (timeout_str.empty())
         {
             Log::warn()
