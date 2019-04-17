@@ -56,7 +56,7 @@ class CCTimeSync
 public:
     CCTimeSync()
     {
-        auto exponent_str = scorep::environment_variable::get("SNYC_EXPONENT");
+        auto exponent_str = scorep::environment_variable::get("SYNC_EXPONENT");
         if (!exponent_str.empty())
         {
             footprint_msequence_exponent_ = std::stoi(exponent_str);
