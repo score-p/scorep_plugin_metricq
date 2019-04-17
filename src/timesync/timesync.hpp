@@ -8,6 +8,7 @@
 #include <metricq/ostream.hpp>
 
 #include <memory>
+#include <numeric>
 #include <stdexcept>
 #include <vector>
 
@@ -90,6 +91,14 @@ public:
         return time_point_scale(measurement_time, time_rate_) + offset_zero_;
     }
 
+    std::vector<metricq::TimeValue> get_correlation_signal_values() const
+    {
+        std::vector<metricq::TimeValue> result = footprint_begin_->recording();
+        result.insert(result.end(), footprint_end_->recording().begin(),
+                      footprint_end_->recording().end());
+        return result;
+    }
+
 private:
     static metricq::TimePoint time_point_scale(metricq::TimePoint time, double factor)
     {
@@ -110,6 +119,22 @@ private:
         Log::debug() << "Sampling raw signal:";
 
         auto measured_signal = sample(measured_raw_signal, st_begin, st_end, sampling_interval_);
+
+        auto average = std::accumulate(measured_signal.begin(), measured_signal.end(), 0.0) /
+                       measured_signal.size();
+        Log::debug() << "Signal average: " << average;
+        for (auto& elem : measured_signal)
+        {
+            elem -= average;
+        }
+        /*auto fake_fake = footprint.recording();
+        for (auto& elem : fake_fake)
+        {
+            elem.value = elem.value + 1000;
+            //elem.time += std::chrono::seconds(1);
+        }
+        auto measured_signal = sample(fake_fake, st_begin, st_end, sampling_interval_);
+         //*/
 
         assert(measured_signal.size() == footprint_signal.size());
         assert(!measured_signal.empty());

@@ -73,8 +73,8 @@ void Footprint::run()
     recording_.resize(0);
     recording_.reserve(4096);
 
-    constexpr int n = 6;
-    constexpr auto time_quantum = std::chrono::milliseconds(32);
+    constexpr int n = 11;
+    constexpr auto time_quantum = std::chrono::milliseconds(1);
     auto sequence = GroupedBinaryMSequence(n);
 
     time_begin_ = low(std::chrono::seconds(3));
@@ -85,7 +85,10 @@ void Footprint::run()
         auto [is_high, length] = *elem;
         auto duration = time_quantum * length;
         deadline += duration;
-        assert(deadline > time_end_);
+        if (deadline <= time_end_)
+        {
+            continue;
+        }
         auto wait = deadline - time_end_;
         if (is_high)
         {

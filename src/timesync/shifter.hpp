@@ -13,6 +13,94 @@ public:
     template <typename T1, typename T2>
     std::pair<long, double> operator()(T1 left_begin, T1 left_end, T2 right_begin, T2 right_end)
     {
+        this->operatorA(left_begin, left_end, right_begin, right_end);
+        return this->operatorB(left_begin, left_end, right_begin, right_end);
+    }
+
+    template <typename T1, typename T2>
+    std::pair<long, double> operatorB(T1 left_begin, T1 left_end, T2 right_begin, T2 right_end)
+    {
+        static int cnt = 9; // cheap hack for distinguishing begin/end synchronization
+        cnt++;
+
+        assert(std::distance(left_begin, left_end) == size_);
+        assert(std::distance(right_begin, right_end) == size_);
+
+        fft_(left_begin, left_end);
+        if (!fft_.isfinite())
+        {
+            throw std::runtime_error("left is not finite");
+        }
+        assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
+               type_size<complex_type>(extended_size_));
+
+        std::copy(fft_.out_begin(), fft_.out_end(), tmp_.begin());
+
+        fft_(right_begin, right_end);
+        if (!fft_.isfinite())
+        {
+            throw std::runtime_error("right is not finite");
+        }
+        assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
+               type_size<complex_type>(extended_size_));
+
+        for (int i = 0; i < tmp_.size(); i++)
+        {
+            auto other = fft_.out_begin()[i];
+            // complex conjugate
+            other.imag(-other.imag());
+            tmp_[i] *= other;
+            if (!my_isfinite(tmp_[i]))
+            {
+                throw std::runtime_error("product is not finite");
+            }
+        }
+
+        ifft_(tmp_.begin(), tmp_.end());
+        assert(std::distance(ifft_.out_begin(), ifft_.out_end()) == extended_size_);
+
+        if (!ifft_.isfinite())
+        {
+            throw std::runtime_error("cross-correlation is not finite");
+        }
+
+        auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
+            if (!std::isfinite(a) || !std::isfinite(b))
+            {
+                return false;
+            }
+            return a < b;
+        });
+
+        auto correlation_filename = scorep::environment_variable::get("CORRELATION_FILE");
+        if (!correlation_filename.empty())
+        {
+            correlation_filename += std::to_string(cnt);
+            std::ofstream file;
+            file.exceptions(std::ofstream::badbit);
+            file.open(correlation_filename);
+            for (auto it = ifft_.out_begin(); it != ifft_.out_end(); ++it)
+            {
+                file << *it << "\n";
+            }
+        }
+
+        std::cerr << "Found max element: " << std::distance(ifft_.out_begin(), it) << ": " << *it
+                  << std::endl;
+        auto offset = std::distance(ifft_.out_begin(), it);
+        if (offset >= size_)
+        {
+            offset -= ifft_.out_size();
+        }
+        return { -offset, *it };
+    };
+
+    template <typename T1, typename T2>
+    std::pair<long, double> operatorA(T1 left_begin, T1 left_end, T2 right_begin, T2 right_end)
+    {
+        static int cnt = -1; // cheap hack for distinguishing begin/end synchronization
+        cnt++;
+
         assert(std::distance(left_begin, left_end) == size_);
         assert(std::distance(right_begin, right_end) == size_);
 
@@ -62,9 +150,7 @@ public:
         auto correlation_filename = scorep::environment_variable::get("CORRELATION_FILE");
         if (!correlation_filename.empty())
         {
-            static int cnt = 0; // cheap hack for distinguishing begin/end synchronization
             correlation_filename += std::to_string(cnt);
-            cnt++;
             std::ofstream file;
             file.exceptions(std::ofstream::badbit);
             file.open(correlation_filename);

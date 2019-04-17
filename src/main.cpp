@@ -56,13 +56,14 @@ public:
 
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& s)
     {
+        std::vector<scorep::plugin::metric_property> result;
+
         auto selector = s;
         if (selector == "*")
         {
             selector = "";
         }
         auto metadata = metricq::get_metadata(url_, token_, selector);
-        std::vector<scorep::plugin::metric_property> result;
         for (const auto& elem : metadata)
         {
             const auto& name = elem.first;
@@ -96,6 +97,17 @@ public:
             }
 
             result.push_back(property);
+        }
+
+        static bool fake = false;
+        if (!fake)
+        {
+            fake = true;
+            std::string name = "corr_sig";
+            make_handle(name, Metric{ name });
+            auto p =
+                scorep::plugin::metric_property(name, name, "#").value_double().absolute_last();
+            result.push_back(p);
         }
         return result;
     }
@@ -177,6 +189,16 @@ public:
     template <class Cursor>
     void get_all_values(Metric& metric, Cursor& c)
     {
+        if (metric.name == "corr_sig")
+        {
+            auto data = cc_time_sync_.get_correlation_signal_values();
+            for (auto& tv : data)
+            {
+                c.write(convert_.to_ticks(tv.time), tv.value);
+            }
+            return;
+        }
+
         auto& data = data_drain_->at(metric.name);
         if (data.empty())
         {

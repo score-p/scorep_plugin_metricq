@@ -66,7 +66,7 @@ protected:
             low();
             time = Clock::now();
         } while (time < end);
-        recording_.emplace_back(time, 0.0);
+        recording_.emplace_back(time, -1.0);
         return time;
     }
 
