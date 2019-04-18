@@ -20,20 +20,14 @@ public:
         assert(std::distance(right_begin, right_end) == size_);
 
         fft_(left_begin, left_end);
-        if (!fft_.isfinite())
-        {
-            throw std::runtime_error("left is not finite");
-        }
+        fft_.check_finite();
         assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
                type_size<complex_type>(extended_size_));
 
         std::copy(fft_.out_begin(), fft_.out_end(), tmp_.begin());
 
         fft_(right_begin, right_end);
-        if (!fft_.isfinite())
-        {
-            throw std::runtime_error("right is not finite");
-        }
+        fft_.check_finite();
         assert(std::distance(fft_.out_begin(), fft_.out_end()) ==
                type_size<complex_type>(extended_size_));
 
@@ -43,19 +37,13 @@ public:
             // complex conjugate
             other.imag(-other.imag());
             tmp_[i] *= other;
-            if (!my_isfinite(tmp_[i]))
-            {
-                throw std::runtime_error("product is not finite");
-            }
+            check_finite(tmp_[i]);
         }
 
         ifft_(tmp_.begin(), tmp_.end());
         assert(std::distance(ifft_.out_begin(), ifft_.out_end()) == extended_size_);
 
-        if (!ifft_.isfinite())
-        {
-            throw std::runtime_error("cross-correlation is not finite");
-        }
+        ifft_.check_finite();
 
         auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
             if (!std::isfinite(a) || !std::isfinite(b))

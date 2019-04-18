@@ -15,14 +15,20 @@ using complex_type = std::complex<double>;
 
 static_assert(sizeof(complex_type) == sizeof(fftw_complex), "You're fucked.");
 
-inline bool my_isfinite(complex_type z)
+inline void check_finite(complex_type z)
 {
-    return std::isfinite(z.real()) && std::isfinite(z.imag());
+    if (!(std::isfinite(z.real()) && std::isfinite(z.imag())))
+    {
+        throw std::runtime_error("Infinite complex value");
+    }
 }
 
-inline bool my_isfinite(double a)
+inline void check_finite(double a)
 {
-    return std::isfinite(a);
+    if (!std::isfinite(a))
+    {
+        throw std::runtime_error("Infinite value");
+    }
 }
 
 template <typename T>
@@ -109,24 +115,16 @@ public:
         return out_ + out_size();
     }
 
-    bool isfinite()
+    void check_finite()
     {
         for (auto it = in_begin(); it != in_end(); ++it)
         {
-            if (!my_isfinite(*it))
-            {
-                return false;
-            }
+            ::check_finite(*it);
         }
-
         for (auto it = out_begin(); it != out_end(); ++it)
         {
-            if (!my_isfinite(*it))
-            {
-                return false;
-            }
+            ::check_finite(*it);
         }
-        return true;
     }
 
 protected:
