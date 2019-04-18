@@ -1,8 +1,11 @@
+#include "footprint.hpp"
+#include "msequence.hpp"
+
+#include <scorep/plugin/util/environment.hpp>
+
 #include <chrono>
 #include <vector>
 
-#include "footprint.hpp"
-#include "msequence.hpp"
 #include <cassert>
 
 namespace timesync
@@ -73,9 +76,16 @@ void Footprint::run(int msequence_exponent, Duration quantum)
     recording_.resize(0);
     recording_.reserve(4096);
 
+    Duration tolerance = std::chrono::seconds(2);
+    if (auto tolerance_str = scorep::environment_variable::get("SYNC_TOLERANCE");
+        !tolerance_str.empty())
+    {
+        tolerance = metricq::duration_parse(tolerance_str);
+    }
+
     auto sequence = GroupedBinaryMSequence(msequence_exponent);
 
-    time_begin_ = low(std::chrono::seconds(3));
+    time_begin_ = low(tolerance);
     time_end_ = time_begin_;
     auto deadline = time_begin_;
     while (auto elem = sequence.take())
@@ -98,7 +108,7 @@ void Footprint::run(int msequence_exponent, Duration quantum)
         }
     }
 
-    low(std::chrono::seconds(3));
+    low(tolerance);
 
     restore_affinity();
 }

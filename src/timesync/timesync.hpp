@@ -1,9 +1,11 @@
 #pragma once
 
-#include "../log.hpp"
-
 #include "footprint.hpp"
 #include "shifter.hpp"
+
+#include "../log.hpp"
+
+#include <scorep/plugin/util/environment.hpp>
 
 #include <metricq/ostream.hpp>
 

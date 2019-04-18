@@ -12,10 +12,11 @@
     SCOREP_METRIC_METRICQ_PLUGIN_TIMEOUT=600s
 
 Control the time synchronization.
-It will take `quantum * 2 ^ exponent` for each sync phase. 
+Each sync phase will last `quantum * 2 ^ exponent + 2 * tolerance`. 
 
     SCOREP_METRIC_METRICQ_PLUGIN_SYNC_EXPONENT=11
     SCOREP_METRIC_METRICQ_PLUGIN_SYNC_QUANTUM=1ms
+    SCOREP_METRIC_METRICQ_PLUGIN_SYNC_TOLERANCE=2s
 
 Because Score-P default settings are insufficient:
 
