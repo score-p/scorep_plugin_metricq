@@ -1,5 +1,7 @@
 #include "fft.hpp"
 
+#include "../log.hpp"
+
 #include <scorep/plugin/plugin.hpp>
 
 #include <fstream>
@@ -11,7 +13,8 @@ public:
     Shifter(std::size_t size, const std::string& tag);
 
     template <typename T1, typename T2>
-    std::pair<long, double> operator()(T1 left_begin, T1 left_end, T2 right_begin, T2 right_end)
+    int operator()(T1 left_begin, T1 left_end, T2 right_begin, T2 right_end,
+                   int oversampling_factor)
     {
         static int cnt = -1; // cheap hack for distinguishing begin/end synchronization
         cnt++;
@@ -45,7 +48,7 @@ public:
 
         ifft_.check_finite();
 
-        auto it = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
+        auto mainlobe = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
             if (!std::isfinite(a) || !std::isfinite(b))
             {
                 return false;
@@ -66,22 +69,41 @@ public:
             }
         }
 
-        std::cerr << "Found max element: " << std::distance(ifft_.out_begin(), it) << ": " << *it
-                  << std::endl;
-        auto offset = std::distance(ifft_.out_begin(), it);
-        if (offset >= size_)
+        auto mainlobe_index = std::distance(ifft_.out_begin(), mainlobe);
+
+        // determine the sidelobe.
+        // need to consider the circular fashion here
+        auto sidelobe_value = std::numeric_limits<double>::lowest();
+        for (int i = 0; i < ifft_.out_size(); ++i)
         {
-            offset -= ifft_.out_size();
+            const auto value = ifft_.out_begin()[i];
+            if (value > sidelobe_value)
+            {
+                auto distance = std::min((i - mainlobe_index) % ifft_.out_size(),
+                                         (mainlobe_index - i) % ifft_.out_size());
+                if (distance >= oversampling_factor)
+                {
+                    sidelobe_value = value;
+                }
+            }
         }
-        return { -offset, *it };
+
+        if (mainlobe_index >= size_)
+        {
+            mainlobe_index -= ifft_.out_size();
+        }
+        Log::debug() << "Found max correlation with offset " << mainlobe_index << ": " << *mainlobe;
+        Log::debug() << "Correlation main-sidelobe-factor: " << (*mainlobe / sidelobe_value);
+
+        return -mainlobe_index;
     };
 
     template <typename T1, typename T2>
-    auto operator()(T1 left, T2 right)
+    auto operator()(T1 left, T2 right, int oversampling_factor)
     {
         using std::begin;
         using std::end;
-        return (*this)(begin(left), end(left), begin(right), end(right));
+        return (*this)(begin(left), end(left), begin(right), end(right), oversampling_factor);
     }
 
 private:

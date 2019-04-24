@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../log.hpp"
-
 #include "msequence.hpp"
+
+#include "../log.hpp"
 
 #include <metricq/types.hpp>
 

@@ -56,21 +56,7 @@ std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR i
 class CCTimeSync
 {
 public:
-    CCTimeSync()
-    {
-        auto exponent_str = scorep::environment_variable::get("SYNC_EXPONENT");
-        if (!exponent_str.empty())
-        {
-            footprint_msequence_exponent_ = std::stoi(exponent_str);
-        }
-        auto quantum_str = scorep::environment_variable::get("SYNC_QUANTUM");
-        if (!quantum_str.empty())
-        {
-            footprint_quantum_ = metricq::duration_parse(quantum_str);
-        }
-        Log::debug() << "Using a footprint sequence with exponent " << footprint_msequence_exponent_
-                     << " and a time quantum of " << footprint_quantum_;
-    }
+    CCTimeSync();
 
     void sync_begin()
     {
@@ -147,32 +133,19 @@ private:
         {
             elem -= average;
         }
-        /*auto fake_fake = footprint.recording();
-        for (auto& elem : fake_fake)
-        {
-            elem.value = elem.value + 1000;
-            //elem.time += std::chrono::seconds(1);
-        }
-        auto measured_signal = sample(fake_fake, st_begin, st_end, sampling_interval_);
-         //*/
 
         assert(measured_signal.size() == footprint_signal.size());
         assert(!measured_signal.empty());
         Log::debug() << "looking for shift in " << measured_signal.size() << " data points";
 
         Shifter shifter(measured_signal.size(), tag);
-        auto result = shifter(footprint_signal, measured_signal);
-        Log::debug() << "completed timesync with correlation of " << result.second << " and offset "
-                     << result.first;
-        if (std::isnan(result.second) || result.second <= 0)
-        {
-            throw std::runtime_error("Correlation doesn't look good to me :(");
-        }
-        return result.first;
+        auto result =
+            shifter(footprint_signal, measured_signal, footprint_quantum_ / sampling_interval_);
+        return result;
     }
 
 private:
-    metricq::Duration sampling_interval_ = std::chrono::microseconds(2);
+    metricq::Duration sampling_interval_ = std::chrono::microseconds(5);
     int footprint_msequence_exponent_ = 11;
     metricq::Duration footprint_quantum_ = std::chrono::milliseconds(1);
 
