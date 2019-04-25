@@ -56,13 +56,14 @@ public:
 
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& s)
     {
+        std::vector<scorep::plugin::metric_property> result;
+
         auto selector = s;
         if (selector == "*")
         {
             selector = "";
         }
         auto metadata = metricq::get_metadata(url_, token_, selector);
-        std::vector<scorep::plugin::metric_property> result;
         for (const auto& elem : metadata)
         {
             const auto& name = elem.first;
@@ -97,6 +98,7 @@ public:
 
             result.push_back(property);
         }
+
         return result;
     }
 
@@ -109,7 +111,7 @@ public:
     {
         convert_.synchronize_point();
         auto timeout_str = scorep::environment_variable::get("TIMEOUT");
-        std::chrono::seconds timeout;
+        auto timeout = metricq::duration_parse(timeout_str);
         if (timeout_str.empty())
         {
             Log::warn()
