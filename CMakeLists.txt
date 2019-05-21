@@ -6,6 +6,9 @@ include(cmake/DefaultBuildType.cmake)
 include(cmake/GitSubmoduleUpdate.cmake)
 git_submodule_update()
 
+# We're building a shared library. D'oh.
+set(NITRO_POSITION_INDEPENDENT_CODE ON CACHE INTERNAL "")
+set(METRICQ_POSITION_INDEPENDENT_CODE ON CACHE INTERNAL "")
 add_subdirectory(lib)
 
 find_package(FFTW3)
@@ -13,7 +16,6 @@ find_package(FFTW3)
 add_library(metricq_plugin
     MODULE
         src/main.cpp
-        src/log.cpp
 
         src/timesync/footprint.cpp
         src/timesync/shifter.cpp
@@ -24,6 +26,7 @@ target_link_libraries(metricq_plugin
     PRIVATE
         Scorep::scorep-plugin-cxx
         metricq::sink
+        metricq::logger-nitro
         FFTW3::fftw3
 )
 

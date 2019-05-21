@@ -1,5 +1,7 @@
 #pragma once
 
+#include <metricq/logger/nitro.hpp>
+
 #include <fftw3.h>
 
 #include <algorithm>
@@ -10,6 +12,8 @@
 #include <cassert>
 #include <climits>
 #include <cstddef>
+
+using Log = metricq::logger::nitro::Log;
 
 using complex_type = std::complex<double>;
 
