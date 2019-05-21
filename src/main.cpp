@@ -1,3 +1,4 @@
+#include "../lib/metricq/include/metricq/metadata.hpp"
 #include "log.hpp"
 #include "timesync/timesync.hpp"
 
@@ -37,7 +38,18 @@ std::vector<T> keys(std::map<T, V>& map)
 struct Metric
 {
     std::string name;
+    bool use_timesync;
 };
+
+void replace_all(std::string& str, const std::string& from, const std::string& to)
+{
+    size_t start_pos;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+}
 
 template <typename T, typename Policies>
 using handle_oid_policy = object_id<Metric, T, Policies>;
@@ -54,21 +66,32 @@ public:
         initialize_logger();
     }
 
+private:
+    auto get_metadata_(const std::string& s)
+    {
+        std::string selector = s;
+        bool is_regex = (selector.find("*") != std::string::npos);
+
+        if (!is_regex)
+        {
+            return get_metadata(url_, token_, std::vector(selector));
+        }
+
+        replace_all(selector, ".", "\\.");
+        replace_all(selector, "*", ".*");
+        return get_metadata(url_, token_, selector);
+    }
+
+public:
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& s)
     {
-        std::vector<scorep::plugin::metric_property> result;
-
-        auto selector = s;
-        if (selector == "*")
-        {
-            selector = "";
-        }
-        auto metadata = metricq::get_metadata(url_, token_, selector);
+        auto metadata = get_metadata_(s) std::vector<scorep::plugin::metric_property> result;
         for (const auto& elem : metadata)
         {
             const auto& name = elem.first;
             const auto& meta = elem.second;
-            make_handle(name, Metric{ name });
+            auto use_timesync = !std::isnan(meta.rate()) and meta.rate() > 1000;
+            make_handle(name, Metric{ name, use_timesync });
 
             auto property = scorep::plugin::metric_property(name, meta.description(), meta.unit())
                                 .value_double();
@@ -158,7 +181,7 @@ public:
         for (auto& metric : get_handles())
         {
             // XXX sync with first metric
-            if (!cc_synced_)
+            if (metric.use_timesync && !cc_synced_)
             {
                 try
                 {
@@ -173,6 +196,18 @@ public:
                     Log::warn() << "Timesync failed with error: " << e.what();
                 }
             }
+        }
+    }
+
+    scorep::chrono::ticks convert_time_(metricq::TimePoint time, Metric& metric)
+    {
+        if (metric.use_timesync)
+        {
+            return convert_.to_ticks(cc_time_sync_.to_local(time));
+        }
+        else
+        {
+            return convert_.to_ticks(time);
         }
     }
 
@@ -196,7 +231,7 @@ public:
                 count++;
                 if (count == average_)
                 {
-                    c.write(convert_.to_ticks(cc_time_sync_.to_local(tv.time)), sum / average_);
+                    c.write(convert_time_(tv.time, metric), sum / average_);
                     count = 0;
                     sum = 0.;
                 }
@@ -206,7 +241,7 @@ public:
         {
             for (auto& tv : data)
             {
-                c.write(convert_.to_ticks(cc_time_sync_.to_local(tv.time)), tv.value);
+                c.write(convert_time_(tv.time, metric), tv.value);
             }
         }
     }
