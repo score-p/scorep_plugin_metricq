@@ -2,8 +2,7 @@
 
 #include "msequence.hpp"
 
-#include "../log.hpp"
-
+#include <metricq/logger/nitro.hpp>
 #include <metricq/types.hpp>
 
 #include <sched.h>
@@ -19,6 +18,7 @@ using Duration = metricq::Duration;
 
 namespace timesync
 {
+using Log = metricq::logger::nitro::Log;
 
 uint64_t sqrtsd_loop_(double* buffer, uint64_t elems, uint64_t repeat);
 

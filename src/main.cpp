@@ -1,7 +1,7 @@
-#include "../lib/metricq/include/metricq/metadata.hpp"
-#include "log.hpp"
 #include "timesync/timesync.hpp"
 
+#include <metricq/logger/nitro.hpp>
+#include <metricq/metadata.hpp>
 #include <metricq/ostream.hpp>
 #include <metricq/simple.hpp>
 #include <metricq/simple_drain.hpp>
@@ -19,6 +19,8 @@
 #include <cstdint>
 
 using namespace scorep::plugin::policy;
+
+using Log = metricq::logger::nitro::Log;
 
 // Must be system clock for real epoch!
 using local_clock = std::chrono::system_clock;
@@ -63,29 +65,30 @@ public:
       token_(scorep::environment_variable::get("TOKEN", "scorepPlugin")),
       average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
-        initialize_logger();
+        metricq::logger::nitro::initialize();
     }
 
 private:
-    auto get_metadata_(const std::string& s)
+    auto get_metadata(const std::string& s)
     {
         std::string selector = s;
         bool is_regex = (selector.find("*") != std::string::npos);
 
         if (!is_regex)
         {
-            return get_metadata(url_, token_, std::vector(selector));
+            return metricq::get_metadata(url_, token_, std::vector<std::string>({ selector }));
         }
 
         replace_all(selector, ".", "\\.");
         replace_all(selector, "*", ".*");
-        return get_metadata(url_, token_, selector);
+        return metricq::get_metadata(url_, token_, selector);
     }
 
 public:
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& s)
     {
-        auto metadata = get_metadata_(s) std::vector<scorep::plugin::metric_property> result;
+        auto metadata = get_metadata(s);
+        std::vector<scorep::plugin::metric_property> result;
         for (const auto& elem : metadata)
         {
             const auto& name = elem.first;

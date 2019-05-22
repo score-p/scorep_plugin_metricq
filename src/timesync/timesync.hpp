@@ -1,12 +1,12 @@
 #pragma once
 
+#include "fft.hpp"
 #include "footprint.hpp"
 #include "shifter.hpp"
 
-#include "../log.hpp"
-
 #include <scorep/plugin/util/environment.hpp>
 
+#include <metricq/logger/nitro.hpp>
 #include <metricq/ostream.hpp>
 
 #include <memory>
@@ -18,6 +18,8 @@
 
 namespace timesync
 {
+using Log = metricq::logger::nitro::Log;
+
 template <typename T, typename TP, typename DUR>
 std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR interval)
 {
