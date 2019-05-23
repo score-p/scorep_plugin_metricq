@@ -1,10 +1,12 @@
 #include "fft.hpp"
 
-#include "../log.hpp"
+#include <metricq/logger/nitro.hpp>
 
 #include <scorep/plugin/plugin.hpp>
 
 #include <fstream>
+
+using Log = metricq::logger::nitro::Log;
 
 class Shifter
 {
