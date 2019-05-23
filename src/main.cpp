@@ -62,7 +62,7 @@ class metricq_plugin : public scorep::plugin::base<metricq_plugin, async, once, 
 public:
     metricq_plugin()
     : url_(scorep::environment_variable::get("SERVER")),
-      token_(scorep::environment_variable::get("TOKEN", "scorepPlugin")),
+      token_(scorep::environment_variable::get("TOKEN", "sink-scorep")),
       average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
         metricq::logger::nitro::initialize();
