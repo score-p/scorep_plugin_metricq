@@ -1,6 +1,7 @@
-#include "log.hpp"
 #include "timesync/timesync.hpp"
 
+#include <metricq/logger/nitro.hpp>
+#include <metricq/metadata.hpp>
 #include <metricq/ostream.hpp>
 #include <metricq/simple.hpp>
 #include <metricq/simple_drain.hpp>
@@ -8,6 +9,7 @@
 
 #include <scorep/plugin/plugin.hpp>
 
+#include <nitro/format.hpp>
 #include <nitro/lang/enumerate.hpp>
 
 #include <chrono>
@@ -18,6 +20,8 @@
 #include <cstdint>
 
 using namespace scorep::plugin::policy;
+
+using Log = metricq::logger::nitro::Log;
 
 // Must be system clock for real epoch!
 using local_clock = std::chrono::system_clock;
@@ -37,7 +41,19 @@ std::vector<T> keys(std::map<T, V>& map)
 struct Metric
 {
     std::string name;
+    bool use_timesync;
+    bool use_average;
 };
+
+void replace_all(std::string& str, const std::string& from, const std::string& to)
+{
+    size_t start_pos;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+}
 
 template <typename T, typename Policies>
 using handle_oid_policy = object_id<Metric, T, Policies>;
@@ -48,32 +64,50 @@ class metricq_plugin : public scorep::plugin::base<metricq_plugin, async, once, 
 public:
     metricq_plugin()
     : url_(scorep::environment_variable::get("SERVER")),
-      token_(scorep::environment_variable::get("TOKEN", "scorepPlugin")),
+      token_(scorep::environment_variable::get("TOKEN", "sink-scorep")),
       average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
-        initialize_logger();
+        metricq::logger::nitro::initialize();
+        auto log_verbose = scorep::environment_variable::get("VERBOSE", "WARN");
+        auto level =
+            nitro::log::severity_from_string(log_verbose, nitro::log::severity_level::info);
+        metricq::logger::nitro::set_severity(level);
     }
 
+private:
+    auto get_metadata(const std::string& s)
+    {
+        std::string selector = s;
+        bool is_regex = (selector.find("*") != std::string::npos);
+
+        if (!is_regex)
+        {
+            return metricq::get_metadata(url_, token_, std::vector<std::string>({ selector }));
+        }
+
+        replace_all(selector, ".", "\\.");
+        replace_all(selector, "*", ".*");
+        selector = nitro::format("^{}$") % selector;
+        return metricq::get_metadata(url_, token_, selector);
+    }
+
+public:
     std::vector<scorep::plugin::metric_property> get_metric_properties(const std::string& s)
     {
+        auto metadata = get_metadata(s);
         std::vector<scorep::plugin::metric_property> result;
-
-        auto selector = s;
-        if (selector == "*")
-        {
-            selector = "";
-        }
-        auto metadata = metricq::get_metadata(url_, token_, selector);
         for (const auto& elem : metadata)
         {
             const auto& name = elem.first;
             const auto& meta = elem.second;
-            make_handle(name, Metric{ name });
+            auto use_timesync = !std::isnan(meta.rate()) and meta.rate() >= 1000;
+            auto use_average = use_timesync && average_;
+            make_handle(name, Metric{ name, use_timesync, use_average });
 
             auto property = scorep::plugin::metric_property(name, meta.description(), meta.unit())
                                 .value_double();
 
-            if (average_)
+            if (use_average)
             {
                 property.absolute_last();
             }
@@ -111,7 +145,7 @@ public:
     {
         convert_.synchronize_point();
         auto timeout_str = scorep::environment_variable::get("TIMEOUT");
-        auto timeout = metricq::duration_parse(timeout_str);
+        metricq::Duration timeout;
         if (timeout_str.empty())
         {
             Log::warn()
@@ -125,7 +159,7 @@ public:
         {
             try
             {
-                timeout = std::chrono::seconds(std::stoll(timeout_str));
+                timeout = metricq::duration_parse(timeout_str);
                 if (timeout.count() <= 0)
                 {
                     throw std::out_of_range("");
@@ -158,7 +192,7 @@ public:
         for (auto& metric : get_handles())
         {
             // XXX sync with first metric
-            if (!cc_synced_)
+            if (metric.use_timesync && !cc_synced_)
             {
                 try
                 {
@@ -176,6 +210,18 @@ public:
         }
     }
 
+    scorep::chrono::ticks convert_time_(metricq::TimePoint time, Metric& metric)
+    {
+        if (metric.use_timesync)
+        {
+            return convert_.to_ticks(cc_time_sync_.to_local(time));
+        }
+        else
+        {
+            return convert_.to_ticks(time);
+        }
+    }
+
     template <class Cursor>
     void get_all_values(Metric& metric, Cursor& c)
     {
@@ -186,7 +232,7 @@ public:
             return;
         }
 
-        if (average_)
+        if (metric.use_average)
         {
             int count = 0;
             double sum = 0.;
@@ -196,7 +242,7 @@ public:
                 count++;
                 if (count == average_)
                 {
-                    c.write(convert_.to_ticks(cc_time_sync_.to_local(tv.time)), sum / average_);
+                    c.write(convert_time_(tv.time, metric), sum / average_);
                     count = 0;
                     sum = 0.;
                 }
@@ -206,7 +252,7 @@ public:
         {
             for (auto& tv : data)
             {
-                c.write(convert_.to_ticks(cc_time_sync_.to_local(tv.time)), tv.value);
+                c.write(convert_time_(tv.time, metric), tv.value);
             }
         }
     }

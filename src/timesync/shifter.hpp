@@ -1,10 +1,12 @@
 #include "fft.hpp"
 
-#include "../log.hpp"
+#include <metricq/logger/nitro.hpp>
 
 #include <scorep/plugin/plugin.hpp>
 
 #include <fstream>
+
+using Log = metricq::logger::nitro::Log;
 
 class Shifter
 {
@@ -92,8 +94,17 @@ public:
         {
             mainlobe_index -= ifft_.out_size();
         }
+        auto sidelobe_factor = *mainlobe / sidelobe_value;
         Log::debug() << "Found max correlation with offset " << mainlobe_index << ": " << *mainlobe;
-        Log::debug() << "Correlation main-sidelobe-factor: " << (*mainlobe / sidelobe_value);
+        if (sidelobe_factor < 3)
+        {
+            Log::warn() << "The time synchronization probably did not work (" << sidelobe_factor
+                        << ")";
+        }
+        else
+        {
+            Log::debug() << "Correlation main-sidelobe-factor: " << sidelobe_factor;
+        }
 
         return -mainlobe_index;
     };

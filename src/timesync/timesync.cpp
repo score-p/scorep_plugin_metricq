@@ -19,7 +19,5 @@ CCTimeSync::CCTimeSync()
     {
         sampling_interval_ = metricq::duration_parse(sampling_str);
     }
-    Log::debug() << "Using a footprint sequence with exponent " << footprint_msequence_exponent_
-                 << " and a time quantum of " << footprint_quantum_;
 }
 } // namespace timesync

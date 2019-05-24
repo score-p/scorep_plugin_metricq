@@ -1,12 +1,12 @@
 #pragma once
 
+#include "fft.hpp"
 #include "footprint.hpp"
 #include "shifter.hpp"
 
-#include "../log.hpp"
-
 #include <scorep/plugin/util/environment.hpp>
 
+#include <metricq/logger/nitro.hpp>
 #include <metricq/ostream.hpp>
 
 #include <memory>
@@ -18,6 +18,8 @@
 
 namespace timesync
 {
+using Log = metricq::logger::nitro::Log;
+
 template <typename T, typename TP, typename DUR>
 std::vector<double> sample(const T& recording, TP time_begin, TP time_end, DUR interval)
 {
@@ -60,6 +62,9 @@ public:
 
     void sync_begin()
     {
+        Log::debug() << "using a footprint sequence with exponent " << footprint_msequence_exponent_
+                     << " and a time quantum of " << footprint_quantum_;
+
         footprint_begin_ =
             std::make_unique<Footprint>(footprint_msequence_exponent_, footprint_quantum_);
     }
@@ -88,7 +93,8 @@ public:
         offset_zero_ = footprint_begin_->time() -
                        time_point_scale(footprint_begin_->time() + offset_begin, time_rate_);
 
-        Log::info() << "offsets" << offset_begin << ", " << offset_end << ", rate: " << time_rate_;
+        Log::debug() << "offsets " << offset_begin << ", " << offset_end
+                     << ", rate: " << time_rate_;
         Log::debug() << "Offset0: " << offset_zero_.count();
     }
 
