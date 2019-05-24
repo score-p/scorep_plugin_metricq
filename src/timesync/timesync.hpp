@@ -62,6 +62,9 @@ public:
 
     void sync_begin()
     {
+        Log::debug() << "using a footprint sequence with exponent " << footprint_msequence_exponent_
+                     << " and a time quantum of " << footprint_quantum_;
+
         footprint_begin_ =
             std::make_unique<Footprint>(footprint_msequence_exponent_, footprint_quantum_);
     }
@@ -90,7 +93,8 @@ public:
         offset_zero_ = footprint_begin_->time() -
                        time_point_scale(footprint_begin_->time() + offset_begin, time_rate_);
 
-        Log::debug() << "offsets " << offset_begin << ", " << offset_end << ", rate: " << time_rate_;
+        Log::debug() << "offsets " << offset_begin << ", " << offset_end
+                     << ", rate: " << time_rate_;
         Log::debug() << "Offset0: " << offset_zero_.count();
     }
 
