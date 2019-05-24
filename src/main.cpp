@@ -103,7 +103,7 @@ public:
             auto property = scorep::plugin::metric_property(name, meta.description(), meta.unit())
                                 .value_double();
 
-            if (average_)
+            if (use_average)
             {
                 property.absolute_last();
             }

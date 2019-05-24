@@ -31,6 +31,13 @@
 
     Control output verbosity. Use one of `trace,debug,info,warn,error,fatal`.
 
+* `SCOREP_METRIC_METRICQ_PLUGIN_AVERAGE` (optional, default: `0`)
+
+    Combine multiple high-resolution (>= 1 kSa/s) values to one.
+    Set to e.g. `8` to reduce the number of values by a factor of `8`.
+    A setting of `0` disables averaging.
+ 
+
 #### Time synchronization
 
 Control the time synchronization.
@@ -40,7 +47,14 @@ Each sync phase will last `quantum * 2 ^ exponent + 2 * tolerance`.
     SCOREP_METRIC_METRICQ_PLUGIN_SYNC_QUANTUM=1ms
     SCOREP_METRIC_METRICQ_PLUGIN_SYNC_TOLERANCE=2s
 
-    SCOREP_METRIC_METRICQ_PLUGIN_CORRELATION_FILE
+* `SCOREP_METRIC_METRICQ_PLUGIN_CORRELATION_FILE` (optional)
+
+    Prefix for writing a file containing correlation values for all offsets.
+    This is only used for the most hardcore timesync debugging.
+    
+Time synchronization is only applied to metrics with >= 1 kSa/s.
+It uses the first of such metrics to determine the offset, so be wary of the order in which metrics are specified.
+Using wildcards is not recommended with that.
 
 #### Recommended Score-P settings
 
