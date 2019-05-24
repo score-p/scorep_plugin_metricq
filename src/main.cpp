@@ -68,6 +68,10 @@ public:
       average_(std::stoi(scorep::environment_variable::get("AVERAGE", "0")))
     {
         metricq::logger::nitro::initialize();
+        auto log_verbose = scorep::environment_variable::get("VERBOSE", "WARN");
+        auto level =
+            nitro::log::severity_from_string(log_verbose, nitro::log::severity_level::info);
+        metricq::logger::nitro::set_severity(level);
     }
 
 private:
