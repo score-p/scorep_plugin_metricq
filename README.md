@@ -40,6 +40,8 @@ Each sync phase will last `quantum * 2 ^ exponent + 2 * tolerance`.
     SCOREP_METRIC_METRICQ_PLUGIN_SYNC_QUANTUM=1ms
     SCOREP_METRIC_METRICQ_PLUGIN_SYNC_TOLERANCE=2s
 
+    SCOREP_METRIC_METRICQ_PLUGIN_CORRELATION_FILE
+
 #### Recommended Score-P settings
 
 Because the Score-P default settings are not appropriate for many use-cases:

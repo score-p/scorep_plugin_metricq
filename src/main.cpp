@@ -42,6 +42,7 @@ struct Metric
 {
     std::string name;
     bool use_timesync;
+    bool use_average;
 };
 
 void replace_all(std::string& str, const std::string& from, const std::string& to)
@@ -95,8 +96,9 @@ public:
         {
             const auto& name = elem.first;
             const auto& meta = elem.second;
-            auto use_timesync = !std::isnan(meta.rate()) and meta.rate() > 1000;
-            make_handle(name, Metric{ name, use_timesync });
+            auto use_timesync = !std::isnan(meta.rate()) and meta.rate() >= 1000;
+            auto use_average = use_timesync && average_;
+            make_handle(name, Metric{ name, use_timesync, use_average });
 
             auto property = scorep::plugin::metric_property(name, meta.description(), meta.unit())
                                 .value_double();
@@ -139,7 +141,7 @@ public:
     {
         convert_.synchronize_point();
         auto timeout_str = scorep::environment_variable::get("TIMEOUT");
-        auto timeout = metricq::duration_parse(timeout_str);
+        metricq::Duration timeout;
         if (timeout_str.empty())
         {
             Log::warn()
@@ -153,7 +155,7 @@ public:
         {
             try
             {
-                timeout = std::chrono::seconds(std::stoll(timeout_str));
+                timeout = metricq::duration_parse(timeout_str);
                 if (timeout.count() <= 0)
                 {
                     throw std::out_of_range("");
@@ -226,7 +228,7 @@ public:
             return;
         }
 
-        if (average_)
+        if (metric.use_average)
         {
             int count = 0;
             double sum = 0.;

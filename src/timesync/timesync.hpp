@@ -90,7 +90,7 @@ public:
         offset_zero_ = footprint_begin_->time() -
                        time_point_scale(footprint_begin_->time() + offset_begin, time_rate_);
 
-        Log::info() << "offsets" << offset_begin << ", " << offset_end << ", rate: " << time_rate_;
+        Log::debug() << "offsets " << offset_begin << ", " << offset_end << ", rate: " << time_rate_;
         Log::debug() << "Offset0: " << offset_zero_.count();
     }
 
