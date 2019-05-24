@@ -17,7 +17,9 @@
 * `SCOREP_METRIC_METRICQ_PLUGIN_TIMEOUT` (optional, default: 1 hour)
 
     Maximum duration of the experiment.
-    It is highly recommended to specify a value.
+    It is strongly recommended to specify a value.
+    If the value is too large and your measurement crashes, it may result in
+    resource exhaustion of the measurement infrastructure.
     The value is a duration string which will be parsed, e.g. `1 hour`.
 
 * `SCOREP_METRIC_METRICQ_PLUGIN_TOKEN` (optional, default: "sink-scorep")
@@ -40,7 +42,7 @@ Each sync phase will last `quantum * 2 ^ exponent + 2 * tolerance`.
 
 #### Recommended Score-P settings
 
-Because the Score-P default settings are dumb:
+Because the Score-P default settings are not appropriate for many use-cases:
 
     SCOREP_ENABLE_PROFILING=false
     SCOREP_ENABLE_TRACING=true

@@ -9,6 +9,7 @@
 
 #include <scorep/plugin/plugin.hpp>
 
+#include <nitro/format.hpp>
 #include <nitro/lang/enumerate.hpp>
 
 #include <chrono>
@@ -81,6 +82,7 @@ private:
 
         replace_all(selector, ".", "\\.");
         replace_all(selector, "*", ".*");
+        selector = nitro::format("^{}$") % selector;
         return metricq::get_metadata(url_, token_, selector);
     }
 
