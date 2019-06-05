@@ -101,6 +101,10 @@ public:
             const auto& name = elem.first;
             const auto& meta = elem.second;
             auto use_timesync = !std::isnan(meta.rate()) and meta.rate() >= 1000;
+            if (use_timesync)
+            {
+                do_cc_time_sync_ = true;
+            }
             auto use_average = use_timesync && average_;
             make_handle(name, Metric{ name, use_timesync, use_average });
 
@@ -174,13 +178,19 @@ public:
         }
         queue_ = metricq::subscribe(url_, token_, metrics_, timeout);
 
-        cc_time_sync_.sync_begin();
+        if (do_cc_time_sync_)
+        {
+            cc_time_sync_.sync_begin();
+        }
     }
 
     void stop()
     {
         convert_.synchronize_point();
-        cc_time_sync_.sync_end();
+        if (do_cc_time_sync_)
+        {
+            cc_time_sync_.sync_end();
+        }
 
         data_drain_ = std::make_unique<metricq::SimpleDrain>(token_, queue_);
         data_drain_->add(metrics_);
@@ -259,14 +269,15 @@ public:
 
 private:
     int average_;
-    bool cc_synced_ = false;
     std::vector<std::string> metrics_;
     std::string url_;
     std::string token_;
     std::string queue_;
     std::map<std::string, std::vector<metricq::TimeValue>> metric_data_;
     scorep::chrono::time_convert<> convert_;
+    bool do_cc_time_sync_ = false;
     timesync::CCTimeSync cc_time_sync_;
+    bool cc_synced_ = false;
     std::unique_ptr<metricq::SimpleDrain> data_drain_;
 };
 
