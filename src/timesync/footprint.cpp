@@ -22,8 +22,12 @@ void Footprint::high()
     }
     if (m == 42.0)
     {
-        // prevent optimization, sure there is an easier way
+// prevent optimization, sure there is an easier way
+#ifdef __arm__
+        __asm__ __volatile__("dmb ish;" :::);
+#else
         __asm__ __volatile__("mfence;" :::);
+#endif
     }
 }
 
@@ -31,7 +35,11 @@ void Footprint::low()
 {
     for (uint64_t i = 0; i < nop_rep; i++)
     {
+#ifdef __arm__
+        asm volatile("yield" ::: "memory");
+#else
         asm volatile("rep; nop" ::: "memory");
+#endif
     }
 }
 
