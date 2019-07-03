@@ -23,7 +23,7 @@ void Footprint::high()
     if (m == 42.0)
     {
 // prevent optimization, sure there is an easier way
-#ifdef __arm__
+#ifdef __aarch64__
         __asm__ __volatile__("dmb ish;" :::);
 #else
         __asm__ __volatile__("mfence;" :::);
@@ -35,7 +35,7 @@ void Footprint::low()
 {
     for (uint64_t i = 0; i < nop_rep; i++)
     {
-#ifdef __arm__
+#ifdef __aarch64__
         asm volatile("yield" ::: "memory");
 #else
         asm volatile("rep; nop" ::: "memory");
