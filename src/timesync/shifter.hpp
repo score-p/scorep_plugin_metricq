@@ -78,7 +78,7 @@ public:
         auto sidelobe_value = std::numeric_limits<double>::lowest();
         for (int i = 0; i < ifft_.out_size(); ++i)
         {
-            const auto value = ifft_.out_begin()[i];
+            const auto value = fabs(ifft_.out_begin()[i]);
             if (value > sidelobe_value)
             {
                 auto distance = std::min((i - mainlobe_index) % ifft_.out_size(),
