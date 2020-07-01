@@ -16,10 +16,6 @@ find_package(FFTW3)
 add_library(metricq_plugin
     MODULE
         src/main.cpp
-
-        src/timesync/footprint.cpp
-        src/timesync/shifter.cpp
-        src/timesync/timesync.cpp
 )
 target_compile_features(metricq_plugin PRIVATE cxx_std_17)
 target_link_libraries(metricq_plugin
@@ -27,8 +23,20 @@ target_link_libraries(metricq_plugin
         Scorep::scorep-plugin-cxx
         metricq::sink
         metricq::logger-nitro
-        FFTW3::fftw3
 )
+
+if(FFTW3_FOUND)
+    target_link_libraries(metricq_plugin PRIVATE FFTW3::fftw3)
+    target_compile_definitions(metricq_plugin PRIVATE ENABLE_TIME_SYNC)
+    target_sources(metricq_plugin
+        PRIVATE
+            src/timesync/timesync.cpp
+            src/timesync/footprint.cpp
+            src/timesync/shifter.cpp
+    )
+else()
+    message(STATUS "Couldn't find FFTW3, advanced time syncronization is not available")
+endif()
 
 install(
     TARGETS metricq_plugin
