@@ -1,4 +1,6 @@
+#ifdef ENABLE_TIME_SYNC
 #include "timesync/timesync.hpp"
+#endif
 
 #include <metricq/logger/nitro.hpp>
 #include <metricq/metadata.hpp>
@@ -101,10 +103,12 @@ public:
             const auto& name = elem.first;
             const auto& meta = elem.second;
             auto use_timesync = !std::isnan(meta.rate()) and meta.rate() >= 1000;
+#ifdef ENABLE_TIME_SYNC
             if (use_timesync)
             {
                 do_cc_time_sync_ = true;
             }
+#endif
             auto use_average = use_timesync && average_;
             make_handle(name, Metric{ name, use_timesync, use_average });
 
@@ -178,19 +182,23 @@ public:
         }
         queue_ = metricq::subscribe(url_, token_, metrics_, timeout);
 
+#ifdef ENABLE_TIME_SYNC
         if (do_cc_time_sync_)
         {
             cc_time_sync_.sync_begin();
         }
+#endif
     }
 
     void stop()
     {
         convert_.synchronize_point();
+#ifdef ENABLE_TIME_SYNC
         if (do_cc_time_sync_)
         {
             cc_time_sync_.sync_end();
         }
+#endif
 
         data_drain_ = std::make_unique<metricq::SimpleDrain>(token_, queue_);
         data_drain_->add(metrics_);
@@ -199,6 +207,7 @@ public:
         data_drain_->main_loop();
         Log::debug() << "finished data drain main loop.";
 
+#ifdef ENABLE_TIME_SYNC
         for (auto& metric : get_handles())
         {
             // XXX sync with first metric
@@ -218,18 +227,19 @@ public:
                 }
             }
         }
+#endif
     }
 
     scorep::chrono::ticks convert_time_(metricq::TimePoint time, Metric& metric)
     {
         if (metric.use_timesync)
         {
+#ifdef ENABLE_TIME_SYNC
             return convert_.to_ticks(cc_time_sync_.to_local(time));
+#endif
         }
-        else
-        {
-            return convert_.to_ticks(time);
-        }
+
+        return convert_.to_ticks(time);
     }
 
     template <class Cursor>
@@ -275,9 +285,11 @@ private:
     std::string queue_;
     std::map<std::string, std::vector<metricq::TimeValue>> metric_data_;
     scorep::chrono::time_convert<> convert_;
+#ifdef ENABLE_TIME_SYNC
     bool do_cc_time_sync_ = false;
     timesync::CCTimeSync cc_time_sync_;
     bool cc_synced_ = false;
+#endif
     std::unique_ptr<metricq::SimpleDrain> data_drain_;
 };
 
