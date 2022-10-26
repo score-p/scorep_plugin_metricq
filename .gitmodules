@@ -1,6 +1,6 @@
 [submodule "lib/scorep_plugin_cxx_wrapper"]
 	path = lib/scorep_plugin_cxx_wrapper
-	url = git@github.com:score-p/scorep_plugin_cxx_wrapper.git
+	url = https://github.com/score-p/scorep_plugin_cxx_wrapper.git
 [submodule "lib/metricq"]
 	path = lib/metricq
 	url = https://github.com/metricq/metricq-cpp.git
