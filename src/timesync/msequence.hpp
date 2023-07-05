@@ -13,7 +13,7 @@ public:
     using ValueType = int;
 
 private:
-    static ValueType compute_coeffs(std::initializer_list<int> coefficient_indices)
+    static ValueType compute_coeffs(const std::vector<int>& coefficient_indices)
     {
         assert(coefficient_indices.size() > 0);
         int n = *coefficient_indices.begin();
@@ -26,7 +26,7 @@ private:
         return coeffs;
     }
 
-    static std::initializer_list<int> get_coefficient_indices(int n)
+    static std::vector<int> get_coefficient_indices(int n)
     {
         switch (n)
         {
@@ -59,7 +59,7 @@ private:
         }
     }
 
-    BinaryMSequenceIter(int n, std::initializer_list<int> coefficient_indices)
+    BinaryMSequenceIter(int n, std::vector<int> coefficient_indices)
     : BinaryMSequenceIter(n, compute_coeffs(coefficient_indices))
     {
     }
