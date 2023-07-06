@@ -50,13 +50,15 @@ public:
 
         ifft_.check_finite();
 
-        auto mainlobe = std::max_element(ifft_.out_begin(), ifft_.out_end(), [](auto a, auto b) {
-            if (!std::isfinite(a) || !std::isfinite(b))
-            {
-                return false;
-            }
-            return a < b;
-        });
+        auto mainlobe = std::max_element(ifft_.out_begin(), ifft_.out_end(),
+                                         [](auto a, auto b)
+                                         {
+                                             if (!std::isfinite(a) || !std::isfinite(b))
+                                             {
+                                                 return false;
+                                             }
+                                             return a < b;
+                                         });
 
         auto correlation_filename = scorep::environment_variable::get("CORRELATION_FILE");
         if (!correlation_filename.empty())
