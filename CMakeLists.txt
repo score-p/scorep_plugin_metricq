@@ -1,6 +1,6 @@
-project(metricq-sink-scorep)
-
 cmake_minimum_required(VERSION 3.8)
+
+project(metricq-sink-scorep LANGUAGES CXX)
 
 include(cmake/DefaultBuildType.cmake)
 include(cmake/GitSubmoduleUpdate.cmake)
@@ -11,7 +11,7 @@ set(NITRO_POSITION_INDEPENDENT_CODE ON CACHE INTERNAL "")
 set(METRICQ_POSITION_INDEPENDENT_CODE ON CACHE INTERNAL "")
 add_subdirectory(lib)
 
-find_package(FFTW3)
+option(METRICQ_ADVANCED_TIMESYNC "Use advanced time sync capability (needs FFTW3)" OFF)
 
 add_library(metricq_plugin
     MODULE
@@ -25,7 +25,8 @@ target_link_libraries(metricq_plugin
         metricq::logger-nitro
 )
 
-if(FFTW3_FOUND)
+if(METRICQ_ADVANCED_TIMESYNC)
+    find_package(FFTW3 REQUIRED)
     target_link_libraries(metricq_plugin PRIVATE FFTW3::fftw3)
     target_compile_definitions(metricq_plugin PRIVATE ENABLE_TIME_SYNC)
     target_sources(metricq_plugin
@@ -34,8 +35,6 @@ if(FFTW3_FOUND)
             src/timesync/footprint.cpp
             src/timesync/shifter.cpp
     )
-else()
-    message(STATUS "Couldn't find FFTW3, advanced time syncronization is not available")
 endif()
 
 install(
