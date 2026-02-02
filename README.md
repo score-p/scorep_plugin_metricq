@@ -92,6 +92,12 @@ cmake -DMETRICQ_METRIC_PER_HOST=ON ...
 ```
 
 When using `per_host` mode, it is critical to ensure that only the rank(s) associated with a given node request metrics from MetricQ.
+This is controlled via the variable `SCOREP_METRIC_METRICQ_PLUGIN_PER_HOST_LOCATION`, which specifies the location of the metric.
+
+The value of `SCOREP_METRIC_METRICQ_PLUGIN_PER_HOST_LOCATION` must equal the prefix of the metrics listed in `SCOREP_METRIC_METRICQ_PLUGIN`.
+This design allows the metric location to be specified explicitly without requiring any modification of the metric string passed to `SCOREP_METRIC_METRICQ_PLUGIN`.
+In effect, location and metric name are separated while remaining consistent.
+
 On ZIH systems, this can be achieved by constructing node-specific metric names using SLURM environment variables.
 For example:
 
@@ -101,6 +107,7 @@ METRIC=power
 
 srun bash -c '
     export SCOREP_METRIC_METRICQ_PLUGIN=$SLURM_CLUSTER_NAME.$SLURMD_NODENAME.'"$METRIC"'
+    export SCOREP_METRIC_METRICQ_PLUGIN_PER_HOST_LOCATION=$SLURM_CLUSTER_NAME.$SLURMD_NODENAME
     exec '"$EXE"'
 '
 ```
