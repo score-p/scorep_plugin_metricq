@@ -60,8 +60,12 @@ void replace_all(std::string& str, const std::string& from, const std::string& t
 template <typename T, typename Policies>
 using handle_oid_policy = object_id<Metric, T, Policies>;
 
-class metricq_plugin : public scorep::plugin::base<metricq_plugin, async, once, post_mortem,
-                                                   scorep_clock, handle_oid_policy>
+class metricq_plugin : public scorep::plugin::base<metricq_plugin,
+                                                   async,
+                                                   per_host,
+                                                   post_mortem,
+                                                   scorep_clock,
+                                                   handle_oid_policy>
 {
 public:
     metricq_plugin()
