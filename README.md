@@ -77,3 +77,33 @@ Because the Score-P default settings are not appropriate for many use-cases:
 
     SCOREP_ENABLE_PROFILING=false
     SCOREP_ENABLE_TRACING=true
+
+
+#### Using the MetricQ plugin in `per_host` mode on ZIH resources
+
+In some situations it is appropriate to switch the MetricQ plugin from `once` mode to `per_host` mode.
+A typical and valid use case is the collection of node-level metrics such as power or energy, where one measurement per physical node is sufficient and semantically correct.
+For most other scenarios, `per_host` mode is discouraged, as it can easily lead to redundant data collection and unnecessary overhead.
+
+To enable `per_host` mode, configure the build as follows:
+
+```
+cmake -DMETRICQ_METRIC_PER_HOST=ON ...
+```
+
+When using `per_host` mode, it is critical to ensure that only the rank(s) associated with a given node request metrics from MetricQ.
+On ZIH systems, this can be achieved by constructing node-specific metric names using SLURM environment variables.
+For example:
+
+```
+EXE="<path/to/my/application>"
+METRIC=power
+
+srun bash -c '
+    export SCOREP_METRIC_METRICQ_PLUGIN=$SLURM_CLUSTER_NAME.$SLURMD_NODENAME.'"$METRIC"'
+    exec '"$EXE"'
+'
+```
+
+This setup guarantees that each node queries only its corresponding MetricQ metric, avoiding duplicate sampling across ranks while preserving correct node-level attribution.
+

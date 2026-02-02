@@ -62,7 +62,11 @@ using handle_oid_policy = object_id<Metric, T, Policies>;
 
 class metricq_plugin : public scorep::plugin::base<metricq_plugin,
                                                    async,
+#ifdef METRICQ_METRIC_PER_HOST
                                                    per_host,
+#else
+                                                   once,
+#endif
                                                    post_mortem,
                                                    scorep_clock,
                                                    handle_oid_policy>
