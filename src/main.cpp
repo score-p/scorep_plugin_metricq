@@ -57,11 +57,31 @@ void replace_all(std::string& str, const std::string& from, const std::string& t
     }
 }
 
+std::string remove_prefix(std::string name, const std::string& prefix)
+{
+    if (name.rfind(prefix, 0) == 0) {              // prefix at position 0
+        name.erase(0, prefix.size());
+        if (!name.empty() && name[0] == '.') {
+            name.erase(0, 1);                      // remove separator
+        }
+    }
+    return name;
+}
+
+
 template <typename T, typename Policies>
 using handle_oid_policy = object_id<Metric, T, Policies>;
 
-class metricq_plugin : public scorep::plugin::base<metricq_plugin, async, once, post_mortem,
-                                                   scorep_clock, handle_oid_policy>
+class metricq_plugin : public scorep::plugin::base<metricq_plugin,
+                                                   async,
+#ifdef METRICQ_METRIC_PER_HOST
+                                                   per_host,
+#else
+                                                   once,
+#endif
+                                                   post_mortem,
+                                                   scorep_clock,
+                                                   handle_oid_policy>
 {
 public:
     metricq_plugin()
@@ -110,11 +130,21 @@ public:
             }
 #endif
             auto use_average = use_timesync && average_;
+#ifdef METRICQ_METRIC_PER_HOST
+            std::string metric_prefix = "metricq_";
+            std::string per_host_location_env = scorep::environment_variable::get("PER_HOST_LOCATION", "");
+
+            std::string metric_name = metric_prefix + remove_prefix(name, std::string( per_host_location_env ));
+
+            make_handle(metric_name, Metric{ name, use_timesync, use_average });
+            auto property = scorep::plugin::metric_property(metric_name, meta.description(), meta.unit())
+                                .value_double();
+#else
             make_handle(name, Metric{ name, use_timesync, use_average });
 
             auto property = scorep::plugin::metric_property(name, meta.description(), meta.unit())
                                 .value_double();
-
+#endif
             if (use_average)
             {
                 property.absolute_last();

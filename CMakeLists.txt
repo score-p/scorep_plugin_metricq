@@ -12,6 +12,7 @@ set(METRICQ_POSITION_INDEPENDENT_CODE ON CACHE INTERNAL "")
 add_subdirectory(lib)
 
 option(METRICQ_ADVANCED_TIMESYNC "Use advanced time sync capability (needs FFTW3)" OFF)
+option(METRICQ_METRIC_PER_HOST "Use the plugin in 'per_host' instead of 'once' metric collection mode" OFF)
 
 add_library(metricq_plugin
     MODULE
@@ -24,6 +25,10 @@ target_link_libraries(metricq_plugin
         metricq::sink
         metricq::logger-nitro
 )
+
+if(METRICQ_METRIC_PER_HOST)
+    target_compile_definitions(metricq_plugin PRIVATE METRICQ_METRIC_PER_HOST=1)
+endif()
 
 if(METRICQ_ADVANCED_TIMESYNC)
     find_package(FFTW3 REQUIRED)
